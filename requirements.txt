@@ -1,1 +1,2 @@
 opensimplex==0.4.3
+tracery==0.1.1
