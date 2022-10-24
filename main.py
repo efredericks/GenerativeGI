@@ -9,8 +9,19 @@ import math
 from generative_object import GenerativeObject
 from techniques import rmsdiff
 from copy import deepcopy
+import multiprocessing as mpc
 
 DIM = (1000,1000)
+
+def evaluate(g):
+    print("Evaluating {0}:{1}".format(g.id, g.grammar))
+    g.isEvaluated = True
+    for technique in g.grammar.split(','):
+        c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+        if technique == 'flow-field':
+            flowField(g.draw, 1, g.dim[1], g.dim[0], c)
+        elif technique == 'stippled':
+            stippledBG(g.draw, c, g.dim)
 
 if __name__ == "__main__":
     # tracery grammar
@@ -46,6 +57,8 @@ if __name__ == "__main__":
     pop_size = 50
     population = []
 
+
+
     #g = GenerativeObject(DIM)
     #techniques = grammar.flatten("#ordered_pattern#")
     #print(techniques)
@@ -58,12 +71,18 @@ if __name__ == "__main__":
         while len(population) < pop_size:
             idx = "{0}_{1}".format(gen,i)
             g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
-            if not g.isEvaluated:
-                print("Evaluating {0}:{1}".format(idx, g.grammar))
-                g.evaluate()
 
             population.append(g)
             i += 1
+
+        unevaluated = filter(lambda x: not x.isEvaluated, population)
+
+        # map me or break out evaluate to make life easier...
+        with mpc.Pool(mpc.cpu_count()-1) as p:
+            p.map(evaluate, unevaluated)
+        #for g in unevaluated:
+        #    print("Evaluating {0}:{1}".format(g.id, g.grammar))
+        #    g.evaluate()
 
         print("Population:")
         for p in population:
