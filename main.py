@@ -6,22 +6,27 @@ import opensimplex
 import tracery
 import random
 import math
+from itertools import repeat
 from generative_object import GenerativeObject
-from techniques import rmsdiff
+from techniques import *
 from copy import deepcopy
 import multiprocessing as mpc
 
 DIM = (1000,1000)
 
-def evaluate(g):
+def evaluate(g):#id, dim, grammar):
     print("Evaluating {0}:{1}".format(g.id, g.grammar))
-    g.isEvaluated = True
+    #g.isEvaluated = True
     for technique in g.grammar.split(','):
         c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
         if technique == 'flow-field':
-            flowField(g.draw, 1, g.dim[1], g.dim[0], c)
+            flowField(g.image, 1, g.dim[1], g.dim[0], c)
         elif technique == 'stippled':
-            stippledBG(g.draw, c, g.dim)
+            stippledBG(g.image, c, g.dim)
+        elif technique == 'pixel-sort':
+            g.image = pixelSort(g.image)
+
+    return g
 
 if __name__ == "__main__":
     # tracery grammar
@@ -32,7 +37,7 @@ if __name__ == "__main__":
 
       'ordered_pattern': ['#techniques#'], 
       'techniques': ['#technique#', '#techniques#,#technique#'],
-      'technique': ['stippled', 'flow-field'],#, '#technique#'],
+      'technique': ['stippled', 'flow-field', 'pixel-sort'],#, '#technique#'],
     }
     grammar = tracery.Grammar(rules)
     #print(grammar.flatten("#ordered_pattern#"))
@@ -53,7 +58,7 @@ if __name__ == "__main__":
     #stippledBG(draw, fill)
     #print(rmsdiff(img, img2), rmsdiff(img, img3), rmsdiff(img2, img3))
 
-    num_gens = 25
+    num_gens = 20
     pop_size = 50
     population = []
 
@@ -62,11 +67,54 @@ if __name__ == "__main__":
     #g = GenerativeObject(DIM)
     #techniques = grammar.flatten("#ordered_pattern#")
     #print(techniques)
+    i = 0
+    while len(population) < pop_size:
+        idx = "{0}_{1}".format(gen,i)
+        g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
+
+        population.append(g)
+        i += 1
 
     for gen in range(num_gens):
         print("Generation",gen)
 
         #for i in range(0,pop_size):
+
+        unevaluated = list(filter(lambda x: not x.isEvaluated, population))
+
+        # map me or break out evaluate to make life easier...
+        #with mpc.Pool(mpc.cpu_count()-1) as p:
+        #    p.map(evaluate, unevaluated)
+        #M = pool.starmap(func, zip(a_args, repeat(second_arg)))
+        #data = p.map(job, [i for i in range(20)])
+
+        with mpc.Pool(mpc.cpu_count()-1) as p:
+            #images = [x.image for x in unevaluated]
+            #grammars = [x.grammar for x in unevaluated]
+            #ids = [x.id for x in unevaluated]
+            retval = p.starmap(evaluate, zip(unevaluated))#images, ids, repeat(DIM), grammars))
+            #print(retval)
+            for i in range(len(retval)):
+                assert unevaluated[i].id == retval[i].id, "Error with ID match on re-joining."
+                unevaluated[i].image = retval[i].image
+
+            #for i in range(len(retval)):
+            #    unevaluated.image = retval.image
+
+            #for r in retval:
+
+            #for x in unevaluated:
+            #    x.isEvaluated = True
+
+        #for g in unevaluated:
+        #    print("Evaluating {0}:{1}".format(g.id, g.grammar))
+        #    evaluate(g)
+
+        # selection
+        # crossover
+        # mutation
+        # filling in
+
         i = 0
         while len(population) < pop_size:
             idx = "{0}_{1}".format(gen,i)
@@ -74,15 +122,6 @@ if __name__ == "__main__":
 
             population.append(g)
             i += 1
-
-        unevaluated = filter(lambda x: not x.isEvaluated, population)
-
-        # map me or break out evaluate to make life easier...
-        with mpc.Pool(mpc.cpu_count()-1) as p:
-            p.map(evaluate, unevaluated)
-        #for g in unevaluated:
-        #    print("Evaluating {0}:{1}".format(g.id, g.grammar))
-        #    g.evaluate()
 
         print("Population:")
         for p in population:
@@ -105,7 +144,7 @@ if __name__ == "__main__":
             p.setFitness(psum)
                 
         population.sort(key=lambda x: x.fitness, reverse=True)
-        print("Generation {0} best fitness: {1}, {2}".format(gen, population[0].fitness, population[0].grammar))
+        print("Generation {0} best fitness: {1}, {2}, {3}".format(gen, population[0].fitness, population[0].grammar, population[0].id))
 
         if (gen < num_gens - 2):
             for j in range(pop_size-1, 0, -1):

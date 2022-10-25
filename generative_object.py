@@ -10,7 +10,6 @@ class GenerativeObject:
     self.dim = dim
     self.grammar = grammar
     self.image = Image.new("RGBA", dim, background)
-    self.draw = ImageDraw.Draw(self.image)
     self.isEvaluated = False
     self.fitness = 0.0
 
