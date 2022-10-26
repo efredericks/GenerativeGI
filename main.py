@@ -16,7 +16,6 @@ DIM = (1000,1000)
 
 def evaluate(g):#id, dim, grammar):
     print("Evaluating {0}:{1}".format(g.id, g.grammar))
-    #g.isEvaluated = True
     for technique in g.grammar.split(','):
         c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
         if technique == 'flow-field':
@@ -54,8 +53,8 @@ if __name__ == "__main__":
     #stippledBG(draw, fill)
     #print(rmsdiff(img, img2), rmsdiff(img, img3), rmsdiff(img2, img3))
 
-    num_gens = 20
-    pop_size = 50
+    num_gens = 3
+    pop_size = 6
     population = []
 
 
@@ -65,9 +64,8 @@ if __name__ == "__main__":
     #print(techniques)
     i = 0
     while len(population) < pop_size:
-        idx = "{0}_{1}".format(gen,i)
+        idx = "{0}_{1}".format(str(0),i)
         g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
-
         population.append(g)
         i += 1
 
@@ -80,6 +78,7 @@ if __name__ == "__main__":
             retval = p.starmap(evaluate, zip(unevaluated))
             for i in range(len(retval)):
                 assert unevaluated[i].id == retval[i].id, "Error with ID match on re-joining."
+                unevaluated[i].isEvaluated = True
                 unevaluated[i].image = retval[i].image
 
         #for g in unevaluated:
@@ -99,10 +98,10 @@ if __name__ == "__main__":
             population.append(g)
             i += 1
 
-        print("Population:")
-        for p in population:
-            print(p.id, p.isEvaluated, p.grammar)
-        print("---")
+        #print("Population:")
+        #for p in population:
+        #    print(p.id, p.isEvaluated, p.grammar)
+        #print("---")
 
         # pair-wise comparison
         compared = {}
@@ -122,9 +121,10 @@ if __name__ == "__main__":
                 
         population.sort(key=lambda x: x.fitness, reverse=True)
         print("Generation {0} best fitness: {1}, {2}, {3}".format(gen, population[0].fitness, population[0].grammar, population[0].id))
+        print("---")
 
         # elite preservation
-        if (gen < num_gens - 2):
+        if (gen < num_gens - 1):
             for j in range(pop_size-1, 0, -1):
                 del population[j]
 
@@ -137,9 +137,11 @@ if __name__ == "__main__":
             unevaluated[i].image = retval[i].image
 
     # Print out last generation
+    print("Final output:")
     for i in range(len(population)):
-        print(population[i].fitness, population[i].grammar)
+        print(population[i].id, population[i].fitness, population[i].grammar)
         population[i].image.save("img-{0}.png".format(population[i].id))
+    print("---")
 
     print("End of line.")
 
