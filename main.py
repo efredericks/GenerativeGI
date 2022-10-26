@@ -31,13 +31,9 @@ def evaluate(g):#id, dim, grammar):
 if __name__ == "__main__":
     # tracery grammar
     rules = {
-      'origin': '#hello# #location#',
-      'hello': ['hello', 'greetings', 'howdy', 'hey'],
-      'location': ['earth', 'world', 'there'],
-
       'ordered_pattern': ['#techniques#'], 
       'techniques': ['#technique#', '#techniques#,#technique#'],
-      'technique': ['stippled', 'flow-field', 'pixel-sort'],#, '#technique#'],
+      'technique': ['stippled', 'flow-field', 'pixel-sort'],
     }
     grammar = tracery.Grammar(rules)
     #print(grammar.flatten("#ordered_pattern#"))
@@ -78,33 +74,13 @@ if __name__ == "__main__":
     for gen in range(num_gens):
         print("Generation",gen)
 
-        #for i in range(0,pop_size):
-
+        # evaluation
         unevaluated = list(filter(lambda x: not x.isEvaluated, population))
-
-        # map me or break out evaluate to make life easier...
-        #with mpc.Pool(mpc.cpu_count()-1) as p:
-        #    p.map(evaluate, unevaluated)
-        #M = pool.starmap(func, zip(a_args, repeat(second_arg)))
-        #data = p.map(job, [i for i in range(20)])
-
         with mpc.Pool(mpc.cpu_count()-1) as p:
-            #images = [x.image for x in unevaluated]
-            #grammars = [x.grammar for x in unevaluated]
-            #ids = [x.id for x in unevaluated]
-            retval = p.starmap(evaluate, zip(unevaluated))#images, ids, repeat(DIM), grammars))
-            #print(retval)
+            retval = p.starmap(evaluate, zip(unevaluated))
             for i in range(len(retval)):
                 assert unevaluated[i].id == retval[i].id, "Error with ID match on re-joining."
                 unevaluated[i].image = retval[i].image
-
-            #for i in range(len(retval)):
-            #    unevaluated.image = retval.image
-
-            #for r in retval:
-
-            #for x in unevaluated:
-            #    x.isEvaluated = True
 
         #for g in unevaluated:
         #    print("Evaluating {0}:{1}".format(g.id, g.grammar))
@@ -113,13 +89,13 @@ if __name__ == "__main__":
         # selection
         # crossover
         # mutation
-        # filling in
 
+
+        # filling in
         i = 0
         while len(population) < pop_size:
             idx = "{0}_{1}".format(gen,i)
             g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
-
             population.append(g)
             i += 1
 
@@ -128,6 +104,7 @@ if __name__ == "__main__":
             print(p.id, p.isEvaluated, p.grammar)
         print("---")
 
+        # pair-wise comparison
         compared = {}
         for p in population:
             psum = 0
@@ -146,16 +123,23 @@ if __name__ == "__main__":
         population.sort(key=lambda x: x.fitness, reverse=True)
         print("Generation {0} best fitness: {1}, {2}, {3}".format(gen, population[0].fitness, population[0].grammar, population[0].id))
 
+        # elite preservation
         if (gen < num_gens - 2):
             for j in range(pop_size-1, 0, -1):
                 del population[j]
-          #population = population[1:]
-        #population[0].image.show()
 
     # Final evaluation
+    unevaluated = list(filter(lambda x: not x.isEvaluated, population))
+    with mpc.Pool(mpc.cpu_count()-1) as p:
+        retval = p.starmap(evaluate, zip(unevaluated))
+        for i in range(len(retval)):
+            assert unevaluated[i].id == retval[i].id, "Error with ID match on re-joining."
+            unevaluated[i].image = retval[i].image
+
+    # Print out last generation
     for i in range(len(population)):
         print(population[i].fitness, population[i].grammar)
         population[i].image.save("img-{0}.png".format(population[i].id))
 
-    print("Done")
+    print("End of line.")
 
