@@ -53,8 +53,8 @@ if __name__ == "__main__":
     #stippledBG(draw, fill)
     #print(rmsdiff(img, img2), rmsdiff(img, img3), rmsdiff(img2, img3))
 
-    num_gens = 25 
-    pop_size = 50 
+    num_gens = 3#25 
+    pop_size = 10#50 
     xover_rate = 0.6
     mut_rate = 0.3
     population = []
@@ -77,7 +77,8 @@ if __name__ == "__main__":
 
     # evaluation
     unevaluated = list(filter(lambda x: not x.isEvaluated, population))
-    with mpc.Pool(mpc.cpu_count()-1) as p:
+    #with mpc.Pool(mpc.cpu_count()-1) as p:
+    with mpc.Pool(4) as p:
         retval = p.starmap(evaluate, zip(unevaluated))
         for i in range(len(retval)):
             assert unevaluated[i].id == retval[i].id, "Error with ID match on re-joining."
