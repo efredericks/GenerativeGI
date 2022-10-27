@@ -53,8 +53,10 @@ if __name__ == "__main__":
     #stippledBG(draw, fill)
     #print(rmsdiff(img, img2), rmsdiff(img, img3), rmsdiff(img2, img3))
 
-    num_gens = 3#25 
-    pop_size = 10#50 
+    num_gens = 25 
+    pop_size = 50 
+    # num_gens = 3
+    # pop_size = 10
     xover_rate = 0.6
     mut_rate = 0.3
     population = []
@@ -77,8 +79,8 @@ if __name__ == "__main__":
 
     # evaluation
     unevaluated = list(filter(lambda x: not x.isEvaluated, population))
-    #with mpc.Pool(mpc.cpu_count()-1) as p:
-    with mpc.Pool(4) as p:
+    with mpc.Pool(mpc.cpu_count()-1) as p:
+    # with mpc.Pool(4) as p:
         retval = p.starmap(evaluate, zip(unevaluated))
         for i in range(len(retval)):
             assert unevaluated[i].id == retval[i].id, "Error with ID match on re-joining."
@@ -120,14 +122,83 @@ if __name__ == "__main__":
         #print("---")
 
 
-        # selection
+        # selection - tbd
         num_xover = int(pop_size * xover_rate)
         num_mut = int(pop_size * mut_rate)
         next_pop = []
 
+
         next_pop.append(deepcopy(population[0])) # elite
 
         # crossover
+        for j in range(int(num_xover/2)):
+            id1 = random.randint(0,len(population)-1)
+            id2 = random.randint(0,len(population)-1)
+            while id1 == id2:
+                id2 = random.randint(0,len(population)-1)
+            
+            # children
+            c1 = deepcopy(population[id1])
+            c2 = deepcopy(population[id2])
+
+            c1.isEvaluated = False
+            c2.isEvaluated = False
+            c1.id += "_c_{0}1_g{1}".format(j,gen)
+            c2.id += "_c_{0}2_g{1}".format(j,gen)
+
+            split_grammar1 = population[id1].grammar.split(",")
+            split_grammar2 = population[id2].grammar.split(",")
+
+            if len(split_grammar1) > 1 and len(split_grammar2) > 1: 
+                # crossover for variable length
+                # pick an index each and flop
+                xover_idx1 = random.randint(1,len(split_grammar2)-1)
+                xover_idx2 = random.randint(1,len(split_grammar2)-1)
+
+                new_grammar1 = []
+                new_grammar2 = []
+
+                print(len(split_grammar1),len(split_grammar2),xover_idx1,xover_idx2)
+                # up to indices
+                for i in range(xover_idx1):
+                    new_grammar1.append(split_grammar1[i])
+                for i in range(xover_idx2):
+                    new_grammar2.append(split_grammar2[i])
+
+                # past indices
+                for i in range(xover_idx1, len(split_grammar1)):
+                    new_grammar2.append(split_grammar1[i])
+                for i in range(xover_idx2, len(split_grammar2)):
+                    new_grammar1.append(split_grammar2[i])
+            
+            else: # one of the genomes was length 1
+                new_grammar1 = []
+                new_grammar2 = []
+
+                if len(split_grammar1) == 1:
+                    new_grammar2 = split_grammar2.copy()
+                    new_grammar2.insert(random.randint(0,len(split_grammar2)),split_grammar1[0])
+
+                    new_grammar1 = split_grammar2.copy()
+                    new_grammar1.insert(random.randint(0,len(split_grammar2)),split_grammar1[0])
+                else:
+                    new_grammar2 = split_grammar1.copy()
+                    new_grammar2.insert(random.randint(0,len(split_grammar1)),split_grammar2[0])
+
+                    new_grammar1 = split_grammar1.copy()
+                    new_grammar1.insert(random.randint(0,len(split_grammar1)),split_grammar2[0])
+
+
+            c1.grammar = ",".join(new_grammar1)
+            c2.grammar = ",".join(new_grammar2)
+            next_pop.append(c1)
+            next_pop.append(c2)
+
+            print("---")
+            print(c1.id, c1.grammar, population[id1].id, population[id1].grammar)
+            print(c2.id, c2.grammar, population[id2].id, population[id2].grammar)
+            print("---")
+
 
         # mutation
         for j in range(num_mut):
@@ -143,7 +214,7 @@ if __name__ == "__main__":
             split_grammar[mut_idx] = rules['technique'][random.randint(0,len(rules['technique'])-1)]
             mutator.grammar = ",".join(split_grammar)
 
-            print(mutator.id, mutator.grammar, population[pop_id].id, population[pop_id].grammar)
+            # print(mutator.id, mutator.grammar, population[pop_id].id, population[pop_id].grammar)
 
             next_pop.append(mutator)
 
