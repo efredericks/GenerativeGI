@@ -3,6 +3,7 @@ import opensimplex
 from pixelsort import pixelsort
 import random
 import math
+import numpy as np
 
 def p5map(n, start1, stop1, start2, stop2):
     return ((n-start1)/(stop1-start1))*(stop2-start2)+start2
@@ -17,12 +18,18 @@ def rmsdiff(im1, im2):
     rms = math.sqrt(sum_of_squares/float(im1.size[0] * im1.size[1]))
     return rms
 
-def pixelSort(img):
-    t =['random', 'edges', 'threshold', 'waves', 'none']
-    random.shuffle(t)
-    return pixelsort(img, angle=random.randint(0, 360), interval_function=t[0])
-
-
+def pixelSort(img, params):#angle, interval, sorting, randomness):
+    #t =['random', 'edges', 'threshold', 'waves', 'none']
+    #random.shuffle(t)
+    return pixelsort(img, 
+        angle=int(params[0]), 
+        interval_function=params[1], 
+        sorting_function=params[2], 
+        randomness=float(params[3]),
+#        char_length=float(params[4]),
+        lower_threshold=float(params[5]),
+        upper_threshold=float(params[6])
+    )
     """
         image: Image.Image,
         mask_image: typing.Optional[Image.Image] = None,
@@ -37,6 +44,13 @@ def pixelSort(img):
         upper_threshold: float = DEFAULTS["upper_threshold"],
         angle: float = DEFAULTS["angle"]
     """
+
+# "simple" PIL dithering
+def simpleDither(img):
+    dithered = img.convert(mode="1")
+    dithered = dithered.convert("RGBA")
+    return dithered
+
 
 
 def stippledBG(img, fill, DIM):

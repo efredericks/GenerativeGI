@@ -11,75 +11,97 @@ from generative_object import GenerativeObject
 from techniques import *
 from copy import deepcopy
 import multiprocessing as mpc
+import numpy as np
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--generations', default=25, type=int)
+parser.add_argument('--population_size', default=50, type=int)
+parser.add_argument('--crossover_rate', default=0.4, type=float)
+parser.add_argument('--mutation_rate', default=0.2, type=float)
+args = parser.parse_args()
 
 DIM = (1000,1000)
 
 def evaluate(g):#id, dim, grammar):
     print("Evaluating {0}:{1}".format(g.id, g.grammar))
     for technique in g.grammar.split(','):
+        _technique = technique.split(":") # split off parameters
         c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-        if technique == 'flow-field':
+        if _technique[0] == 'flow-field':
             flowField(g.image, 1, g.dim[1], g.dim[0], c)
-        elif technique == 'stippled':
+        elif _technique[0] == 'stippled':
             stippledBG(g.image, c, g.dim)
-        elif technique == 'pixel-sort':
-            g.image = pixelSort(g.image)
+        elif _technique[0] == 'pixel-sort':
+            # 1: angle
+            # 2: interval
+            # 3: sorting algorithm
+            # 4: randomness
+            # 5: character length
+            # 6: lower threshold
+            # 7: upper threshold
+            g.image = pixelSort(g.image, _technique[1:])
 
+        elif _technique[0] == 'dither':
+            g.image = simpleDither(g.image)
     return g
+
+# Fill in the passed in list with random population members
+def generatePopulation(_population, gen, pop_size):
+    ret_pop = _population.copy()
+    print("Generating new population from size {0} to size {1}".format(len(_population), pop_size))
+    i = 0
+    while len(ret_pop) < pop_size:
+        idx = "{0}_{1}".format(str(gen),i)
+        g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
+        ret_pop.append(g)
+        i += 1
+    return ret_pop
 
 if __name__ == "__main__":
     # tracery grammar
+    # leave a trailing colon after each technique for the parameter list
     rules = {
       'ordered_pattern': ['#techniques#'], 
       'techniques': ['#technique#', '#techniques#,#technique#'],
-      'technique': ['stippled', 'flow-field', 'pixel-sort'],
+      'technique': ['stippled:', 
+                    'flow-field:', 
+                    'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#', 
+                    'dither:'],
+      # pixel sort parameters
+      'pixel-sort-angle': [str(x) for x in range(0,360)],
+      'pixel-sort-interval': ['random', 'edges', 'threshold', 'waves', 'none'],
+      'pixel-sort-sorting': ['lightness', 'hue', 'saturation', 'intensity', 'minimum'],
+      'pixel-sort-randomness': [str(x) for x in np.arange(0.0, 1.0, 0.05)],
+      'pixel-sort-charlength': [str(x) for x in range(1,30)],
+      'pixel-sort-lowerthreshold': [str(x) for x in np.arange(0.0, 0.25, 0.01)],
+      'pixel-sort-upperthreshold': [str(x) for x in np.arange(0.0, 1.0, 0.01)],
+      # flow field parameters
     }
     grammar = tracery.Grammar(rules)
-    #print(grammar.flatten("#ordered_pattern#"))
-
-
-
-    #img = Image.new("RGBA", DIM, "grey")
-    #draw = ImageDraw.Draw(img)
-
-    #img2 = Image.new("RGBA", DIM, "grey")
-    #draw2 = ImageDraw.Draw(img2)
-
-
-    #fill = (0,0,0)
-
     opensimplex.seed(random.randint(0,100000))
-    #flowField(draw, 1, DIM[1], DIM[0])
-    #stippledBG(draw, fill)
-    #print(rmsdiff(img, img2), rmsdiff(img, img3), rmsdiff(img2, img3))
 
-    num_gens = 25 
-    pop_size = 50 
-    # num_gens = 3
-    # pop_size = 10
-    xover_rate = 0.6
-    mut_rate = 0.3
+    num_gens = args.generations
+    pop_size = args.population_size
+
+    xover_rate = args.crossover_rate
+    mut_rate = args.mutation_rate
     population = []
-
-
-
-    #g = GenerativeObject(DIM)
-    #techniques = grammar.flatten("#ordered_pattern#")
-    #print(techniques)
 
     ##### GENERATION 0
     ##### THIS ALL NEEDS TO BE REFACTORED TO BE FXN CALLS
     print("Generation",0)
-    i = 0
-    while len(population) < pop_size:
-        idx = "{0}_{1}".format(str(0),i)
-        g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
-        population.append(g)
-        i += 1
+    # i = 0
+    population = generatePopulation(population, 0, pop_size)
+    # while len(population) < pop_size:
+    #     idx = "{0}_{1}".format(str(0),i)
+    #     g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
+    #     population.append(g)
+    #     i += 1
 
     # evaluation
     unevaluated = list(filter(lambda x: not x.isEvaluated, population))
-    with mpc.Pool(mpc.cpu_count()-1) as p:
+    with mpc.Pool(mpc.cpu_count()-3) as p:
     # with mpc.Pool(4) as p:
         retval = p.starmap(evaluate, zip(unevaluated))
         for i in range(len(retval)):
@@ -152,7 +174,7 @@ if __name__ == "__main__":
             if len(split_grammar1) > 1 and len(split_grammar2) > 1: 
                 # crossover for variable length
                 # pick an index each and flop
-                xover_idx1 = random.randint(1,len(split_grammar2)-1)
+                xover_idx1 = random.randint(1,len(split_grammar1)-1)
                 xover_idx2 = random.randint(1,len(split_grammar2)-1)
 
                 new_grammar1 = []
@@ -211,7 +233,9 @@ if __name__ == "__main__":
 
             split_grammar = mutator.grammar.split(",")
             mut_idx = random.randint(0,len(split_grammar)-1)
-            split_grammar[mut_idx] = rules['technique'][random.randint(0,len(rules['technique'])-1)]
+            local_grammar = grammar.flatten("#technique#")
+            split_grammar[mut_idx] = local_grammar
+            #split_grammar[mut_idx] = rules['technique'][random.randint(0,len(rules['technique'])-1)]
             mutator.grammar = ",".join(split_grammar)
 
             # print(mutator.id, mutator.grammar, population[pop_id].id, population[pop_id].grammar)
@@ -219,16 +243,17 @@ if __name__ == "__main__":
             next_pop.append(mutator)
 
         # filling in
-        i = 0
-        while len(next_pop) < pop_size:
-            idx = "{0}_{1}".format(gen,i)
-            g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
-            next_pop.append(g)
-            i += 1
+        next_pop = generatePopulation(next_pop, gen, pop_size)
+        # i = 0
+        # while len(next_pop) < pop_size:
+        #     idx = "{0}_{1}".format(gen,i)
+        #     g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
+        #     next_pop.append(g)
+        #     i += 1
 
         # evaluation
         unevaluated = list(filter(lambda x: not x.isEvaluated, next_pop))
-        with mpc.Pool(mpc.cpu_count()-1) as p:
+        with mpc.Pool(mpc.cpu_count()-3) as p:
             retval = p.starmap(evaluate, zip(unevaluated))
             for i in range(len(retval)):
                 assert unevaluated[i].id == retval[i].id, "Error with ID match on re-joining."
@@ -267,7 +292,7 @@ if __name__ == "__main__":
 
     # Final evaluation
     unevaluated = list(filter(lambda x: not x.isEvaluated, population))
-    with mpc.Pool(mpc.cpu_count()-1) as p:
+    with mpc.Pool(mpc.cpu_count()-3) as p:
         retval = p.starmap(evaluate, zip(unevaluated))
         for i in range(len(retval)):
             assert unevaluated[i].id == retval[i].id, "Error with ID match on re-joining."
