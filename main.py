@@ -1,6 +1,11 @@
 # FF:
 #   FF1: maximize diversity on canvas
 #   FF2: minimize size of generated code
+
+# Note: at present I do not delete the Image object when creating a child as it 
+# seems to be generating more "interesting" outputs than if I were to replace the 
+# Image attribute with a blank canvas.
+
 from PIL import Image, ImageDraw, ImageChops
 import opensimplex
 import tracery
@@ -302,7 +307,10 @@ if __name__ == "__main__":
     print("Final output:")
     for i in range(len(population)):
         print(population[i].id, population[i].fitness, population[i].grammar)
-        population[i].image.save("img-{0}.png".format(population[i].id))
+        if i == 0:
+            population[i].image.save("best-img-{0}.png".format(population[i].id))
+        else:
+            population[i].image.save("img-{0}.png".format(population[i].id))
     print("---")
 
     print("End of line.")
