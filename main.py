@@ -279,6 +279,8 @@ if __name__ == "__main__":
                         compared[id1] = True
                         psum += diff
             psum /= (len(next_pop)-1)
+            # calculate historical max?
+            fitness = (0.5*psum) - len(p.grammar)
             p.setFitness(psum)
                 
         next_pop.sort(key=lambda x: x.fitness, reverse=True)
