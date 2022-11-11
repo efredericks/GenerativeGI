@@ -35,7 +35,7 @@ def evaluate(g):#id, dim, grammar):
         _technique = technique.split(":") # split off parameters
         c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
         if _technique[0] == 'flow-field':
-            flowField(g.image, 1, g.dim[1], g.dim[0], c)
+            flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1], _technique[2], _technique[2])
         elif _technique[0] == 'stippled':
             stippledBG(g.image, c, g.dim)
         elif _technique[0] == 'pixel-sort':
@@ -190,7 +190,7 @@ if __name__ == "__main__":
       'ordered_pattern': ['#techniques#'], 
       'techniques': ['#technique#', '#techniques#,#technique#'],
       'technique': ['stippled:', 
-                    'flow-field:', 
+                    'flow-field:#flow-field-type#:#flow-field-zoom#', 
                     'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#', 
                     'dither:'],
       # pixel sort parameters
@@ -202,6 +202,8 @@ if __name__ == "__main__":
       'pixel-sort-lowerthreshold': [str(x) for x in np.arange(0.0, 0.25, 0.01)],
       'pixel-sort-upperthreshold': [str(x) for x in np.arange(0.0, 1.0, 0.01)],
       # flow field parameters
+      'flow-field-type': ['edgy', 'curves'],
+      'flow-field-zoom': [str(x) for x in np.arange(0.001, 0.5, 0.001)],
     }
     grammar = tracery.Grammar(rules)
     opensimplex.seed(random.randint(0,100000))

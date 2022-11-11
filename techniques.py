@@ -63,18 +63,29 @@ def stippledBG(img, fill, DIM):
 
 # Noise from opensimplex.noise returns [-1,1]
 # TBD: frequency?
-def flowField(img, cellsize, numrows, numcols, fill, multX=0.01, multY=0.01):
+def flowField(img, cellsize, numrows, numcols, fill, flowType, multX=0.01, multY=0.01):
+    # unpack the string
+    multX = float(multX)
+    multY = float(multY)
+
     draw = ImageDraw.Draw(img)
     grid = []
     for r in range(numrows):
         grid.append([])
         for c in range(numcols):
             n = opensimplex.noise2(x=c*multX,y=r*multY)
-            grid[r].append(p5map(n,-1.0, 1.0, 0.0, 2.0*math.pi))
+
+            if (flowType == "curves"):
+                grid[r].append(p5map(n,-1.0, 1.0, 0.0, 2.0*math.pi))
+            else:
+                grid[r].append(math.ceil(
+                  (p5map(n, 0.0, 1.0, 0.0, 2.0*math.pi) * (math.pi / 4.0)) / (math.pi / 4.0)
+                ))
+        
 
     particles = []
     for _ in range(1000):
-        p = {'x': random.randint(0,numcols-1), 'y': random.randint(0,numrows-1)}
+        p = {'x': random.randint(0,numcols-1), 'y': random.randint(0,numrows-1), 'life': random.randint(numcols/2,numcols)}
         particles.append(p)
 
     while len(particles) > 0:
@@ -87,8 +98,9 @@ def flowField(img, cellsize, numrows, numcols, fill, multX=0.01, multY=0.01):
 
             p['x'] += math.cos(angle)
             p['y'] += math.sin(angle)
+            p['life'] -= 1
            # print(p)
 
-            if (p['x'] < 0 or p['x'] > numcols-1 or p['y'] < 0 or p['y'] > numrows-1):
+            if (p['x'] < 0 or p['x'] > numcols-1 or p['y'] < 0 or p['y'] > numrows-1 or p['life'] <= 0):
                 particles.pop(i)
     return
