@@ -15,6 +15,8 @@ class GenerativeObject:
 
   def setFitness(self, val):
       self.fitness = val
+  def getFitness(self):
+      return self.fitness
 
   #def evaluate(self):
   #  self.isEvaluated = True

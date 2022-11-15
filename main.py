@@ -79,20 +79,42 @@ def generatePopulation(_population, gen, pop_size):
 # Compare each population member to each other population member (this one uses RMS difference)
 # and set its fitness to be the greatest 'difference'
 def pairwiseComparison(_population):
+    maxUniques = 0
+    maxDiff = 0.0
     compared = {}
     for p in _population:
+        maxUniques = len(set(p.grammar.split(',')))
         psum = 0
-        for p2 in _population:
-            if p != p2:
-                id1 = "{0}:{1}".format(p.id, p2.id)
-                id2 = "{0}:{1}".format(p2.id, p.id)
-                keys = compared.keys()
-                if not id1 in keys or not id2 in keys:
-                    diff = rmsdiff(p.image, p2.image)
-                    compared[id1] = True
-                    psum += diff
-        psum /= (len(_population)-1)
-        p.setFitness(psum)
+
+        # image is the background color with no changes - weed out
+        numblack = count_nonblack_pil(p.image)
+        if numblack == 0:
+            p.setFitness(-1.0)
+        else: 
+            for p2 in _population:
+                if p != p2:
+                    maxUniques2 = len(set(p2.grammar.split(',')))
+                    if maxUniques2 > maxUniques:
+                        maxUniques = maxUniques2
+
+                    id1 = "{0}:{1}".format(p.id, p2.id)
+                    id2 = "{0}:{1}".format(p2.id, p.id)
+                    keys = compared.keys()
+                    if not id1 in keys or not id2 in keys:
+                        diff = rmsdiff(p.image, p2.image)
+
+                        if (diff > maxDiff): 
+                            maxDiff = diff
+                        compared[id1] = True
+                        psum += diff
+            psum /= (len(_population)-1)
+            p.setFitness(psum)
+
+    # actual fitness?
+    for p in _population:
+        lenTechniques = len(set(p.grammar.split(',')))
+        p.setFitness((0.5*(p.getFitness()/maxDiff)) + (0.5*(lenTechniques/maxUniques)))
+
 
 # Perform single-point crossover 
 def singlePointCrossover(_population, _next_pop, num_xover):
@@ -264,6 +286,8 @@ if __name__ == "__main__":
 
     # Final evaluation
     evaluatePopulation(population)
+    pairwiseComparison(population)
+    population.sort(key=lambda x: x.fitness, reverse=True)
 
     # Print out last generation
     print("Final output:")

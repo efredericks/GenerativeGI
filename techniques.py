@@ -5,6 +5,7 @@ import random
 import math
 import numpy as np
 
+### Utility functions
 def p5map(n, start1, stop1, start2, stop2):
     return ((n-start1)/(stop1-start1))*(stop2-start2)+start2
 
@@ -17,6 +18,17 @@ def rmsdiff(im1, im2):
     sum_of_squares = sum(sq)
     rms = math.sqrt(sum_of_squares/float(im1.size[0] * im1.size[1]))
     return rms
+
+# c/o https://codereview.stackexchange.com/questions/55902/fastest-way-to-count-non-zero-pixels-using-python-and-pillow
+def count_nonblack_pil(img):
+    bbox = img.getbbox()
+    if not bbox: return 0
+    return sum(img.crop(bbox)
+               .point(lambda x: 255 if x else 0)
+               .convert("L")
+               .point(bool)
+               .getdata())
+###
 
 def pixelSort(img, params):#angle, interval, sorting, randomness):
     #t =['random', 'edges', 'threshold', 'waves', 'none']
