@@ -116,3 +116,73 @@ def flowField(img, cellsize, numrows, numcols, fill, flowType, multX=0.01, multY
             if (p['x'] < 0 or p['x'] > numcols-1 or p['y'] < 0 or p['y'] > numrows-1 or p['life'] <= 0):
                 particles.pop(i)
     return
+
+# Based on https://p5js.org/examples/simulate-wolfram-ca.html
+def WolframCARules(a, b, c, ruleset):
+    if a == 1 and b == 1 and c == 1: return ruleset[0]
+    if a == 1 and b == 1 and c == 0: return ruleset[1]
+    if a == 1 and b == 0 and c == 1: return ruleset[2]
+    if a == 1 and b == 0 and c == 0: return ruleset[3]
+    if a == 0 and b == 1 and c == 1: return ruleset[4]
+    if a == 0 and b == 1 and c == 0: return ruleset[5]
+    if a == 0 and b == 0 and c == 1: return ruleset[6]
+    if a == 0 and b == 0 and c == 0: return ruleset[7]
+    return 0
+
+def WolframCAGenerate(cells, generation, ruleset):
+    nextgen = [0 for _ in range(len(cells))]
+    for i in range(1,len(cells)-1):
+        left = cells[i-1]
+        middle = cells[i]
+        right = cells[i+1]
+        nextgen[i] = WolframCARules(left, middle, right, ruleset)
+    #cells = nextgen
+    generation += 1
+    return nextgen, generation
+
+def WolframCA(img):
+    # setup
+    draw = ImageDraw.Draw(img)
+
+    width,height = img.size
+    w = 10
+    h = (height // w) + 1
+    cells = []
+    generation = 0
+
+    num_cells = (width // w)+1
+    cells = [0 for _ in range(num_cells)]
+
+    # random starting point
+    # TBD param
+    if random.random() > 0.5:
+        cells[len(cells) // 2] = 1
+    else:
+        cells[random.randint(0,len(cells)-1)] = 1
+
+
+    # standard wolfram rules
+    # TBD param
+    if random.random() > 0.5:
+        ruleset = [0, 1, 0, 1, 1, 0, 1, 0]
+    else:    
+        # random rules
+        ruleset = []
+        for _ in range(8):
+            ruleset.append(random.choice([0,1]))
+
+    # draw and iterate
+    col = (220, 220, 220)
+    while generation < h:
+        for i in range(len(cells)):
+            x = i * w
+            y = generation * w
+            if cells[i] == 1:
+                col = (220, 0, 220)
+            else:
+                col = (0, 0, 0)
+            draw.rectangle([x, y, x+w, y+w], fill=col)
+
+        cells, generation = WolframCAGenerate(cells, generation, ruleset)
+    return
+# ---

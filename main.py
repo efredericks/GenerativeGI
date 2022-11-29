@@ -50,6 +50,8 @@ def evaluate(g):#id, dim, grammar):
 
         elif _technique[0] == 'dither':
             g.image = simpleDither(g.image)
+        elif _technique[0] == 'wolfram-ca':
+            WolframCA(g.image)
     return g
 
 # Evaluate all 'unevaluated' members of the current population
@@ -212,6 +214,7 @@ if __name__ == "__main__":
       'ordered_pattern': ['#techniques#'], 
       'techniques': ['#technique#', '#techniques#,#technique#'],
       'technique': ['stippled:', 
+                    'wolfram-ca:',
                     'flow-field:#flow-field-type#:#flow-field-zoom#', 
                     'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#', 
                     'dither:'],
