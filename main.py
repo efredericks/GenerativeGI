@@ -24,6 +24,7 @@ parser.add_argument('--generations', default=25, type=int)
 parser.add_argument('--population_size', default=50, type=int)
 parser.add_argument('--crossover_rate', default=0.4, type=float)
 parser.add_argument('--mutation_rate', default=0.2, type=float)
+parser.add_argument('--random_eval', action='store_true', default=False)
 args = parser.parse_args()
 
 DIM = (1000,1000)
@@ -241,65 +242,81 @@ if __name__ == "__main__":
     mut_rate = args.mutation_rate
     population = []
 
-    ##### GENERATION 0
-    print("Generation",0)
-    population = generatePopulation(population, 0, pop_size)
+    if args.random_eval: # random
+        run_type = "random"
+        pop_size = num_gens * pop_size
+        print("Random evaluation")
+        population = generatePopulation(population, 0, pop_size)
 
-    # initial evaluation
-    evaluatePopulation(population)
-
-    # pair-wise comparison
-    pairwiseComparison(population)
-            
-    population.sort(key=lambda x: x.fitness, reverse=True)
-    print("Generation {0} best fitness: {1}, {2}, {3}".format(0, population[0].fitness, population[0].grammar, population[0].id))
-    print("---")
-    #####################
-
-    for gen in range(1,num_gens):
-        print("Generation",gen)
-
-        num_xover = int(pop_size * xover_rate)
-        num_mut = int(pop_size * mut_rate)
-        next_pop = []
-
-        next_pop.append(deepcopy(population[0])) # elite
-
-        # crossover
-        singlePointCrossover(population, next_pop, num_xover)
-
-        # mutation
-        singlePointMutation(population, next_pop, num_mut)
-
-        # filling in
-        next_pop = generatePopulation(next_pop, gen, pop_size)
-
-        # evaluation
-        evaluatePopulation(next_pop)
+        # initial evaluation
+        evaluatePopulation(population)
 
         # pair-wise comparison
-        pairwiseComparison(next_pop)
+        pairwiseComparison(population)
                 
-        # Sorting and cleanup
-        next_pop.sort(key=lambda x: x.fitness, reverse=True)
-        print("Generation {0} best fitness: {1}, {2}, {3}".format(gen, population[0].fitness, population[0].grammar, population[0].id))
-        print("---")
-        del population
-        population = next_pop
+        population.sort(key=lambda x: x.fitness, reverse=True)
+    else: # ga
+        run_type = "ga"
+        ##### GENERATION 0
+        print("Generation",0)
+        population = generatePopulation(population, 0, pop_size)
 
-    # Final evaluation
-    evaluatePopulation(population)
-    pairwiseComparison(population)
-    population.sort(key=lambda x: x.fitness, reverse=True)
+        # initial evaluation
+        evaluatePopulation(population)
+
+        # pair-wise comparison
+        pairwiseComparison(population)
+                
+        population.sort(key=lambda x: x.fitness, reverse=True)
+        print("Generation {0} best fitness: {1}, {2}, {3}".format(0, population[0].fitness, population[0].grammar, population[0].id))
+        print("---")
+        #####################
+
+        for gen in range(1,num_gens):
+            print("Generation",gen)
+
+            num_xover = int(pop_size * xover_rate)
+            num_mut = int(pop_size * mut_rate)
+            next_pop = []
+
+            next_pop.append(deepcopy(population[0])) # elite
+
+            # crossover
+            singlePointCrossover(population, next_pop, num_xover)
+
+            # mutation
+            singlePointMutation(population, next_pop, num_mut)
+
+            # filling in
+            next_pop = generatePopulation(next_pop, gen, pop_size)
+
+            # evaluation
+            evaluatePopulation(next_pop)
+
+            # pair-wise comparison
+            pairwiseComparison(next_pop)
+                    
+            # Sorting and cleanup
+            next_pop.sort(key=lambda x: x.fitness, reverse=True)
+            print("Generation {0} best fitness: {1}, {2}, {3}".format(gen, population[0].fitness, population[0].grammar, population[0].id))
+            print("---")
+            del population
+            population = next_pop
+
+        # Final evaluation
+        evaluatePopulation(population)
+        pairwiseComparison(population)
+        population.sort(key=lambda x: x.fitness, reverse=True)
 
     # Print out last generation
     print("Final output:")
+
     for i in range(len(population)):
         print(population[i].id, population[i].fitness, population[i].grammar)
         if i == 0:
-            population[i].image.save("best-img-{0}.png".format(population[i].id))
+            population[i].image.save("best-img-{0}.{1}.png".format(population[i].id, run_type))
         else:
-            population[i].image.save("img-{0}.png".format(population[i].id))
+            population[i].image.save("img-{0}.{1}.png".format(population[i].id, run_type))
     print("---")
     print("End of line.")
 
