@@ -4,6 +4,7 @@ from pixelsort import pixelsort
 import random
 import math
 import numpy as np
+from settings import *
 
 ### Utility functions
 def p5map(n, start1, stop1, start2, stop2):
@@ -62,6 +63,26 @@ def simpleDither(img):
     dithered = img.convert(mode="1")
     dithered = dithered.convert("RGBA")
     return dithered
+
+# Drunken walk
+def drunkenWalk(img, startX=None, startY=None, color=None, numSteps=None):
+    # randomly set parameters if not specified
+    if startX == None:
+        startX = random.randint(0,DIM[0]-1) 
+    if startY == None:
+        startY = random.randint(0,DIM[0]-1)
+    if color == None:
+        r = random.randint(0,255)
+        g = random.randint(0,255)
+        b = random.randint(0,255)
+        color = (r,g,b)
+    if numSteps == None:
+        numSteps = random.randint(1,10)
+
+    #while numSteps > 0:
+    #    numSteps -= 1
+
+    return
 
 
 

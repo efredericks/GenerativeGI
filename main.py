@@ -8,9 +8,10 @@
 
 from PIL import Image, ImageDraw, ImageChops
 import opensimplex
-import tracery
 import random
+import tracery
 import math
+import os
 from itertools import repeat
 from generative_object import GenerativeObject
 from techniques import *
@@ -18,6 +19,7 @@ from copy import deepcopy
 import multiprocessing as mpc
 import numpy as np
 import argparse
+from settings import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--generations', default=25, type=int)
@@ -25,9 +27,8 @@ parser.add_argument('--population_size', default=50, type=int)
 parser.add_argument('--crossover_rate', default=0.4, type=float)
 parser.add_argument('--mutation_rate', default=0.2, type=float)
 parser.add_argument('--random_eval', action='store_true', default=False)
+parser.add_argument('--output_dir', default='.')
 args = parser.parse_args()
-
-DIM = (1000,1000)
 
 # Accepts a GenerativeObject and iterates over its grammar, performing the technique specified
 def evaluate(g):#id, dim, grammar):
@@ -209,34 +210,14 @@ def singlePointMutation(_population, _next_pop, num_mut):
 
 
 if __name__ == "__main__":
-    # tracery grammar
-    # leave a trailing colon after each technique for the parameter list as we're splitting on colon regardless
-    rules = {
-      'ordered_pattern': ['#techniques#'], 
-      'techniques': ['#technique#', '#techniques#,#technique#'],
-      'technique': ['stippled:', 
-                    'wolfram-ca:',
-                    'flow-field:#flow-field-type#:#flow-field-zoom#', 
-                    'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#', 
-                    'dither:'],
-      # pixel sort parameters
-      'pixel-sort-angle': [str(x) for x in range(0,360)],
-      'pixel-sort-interval': ['random', 'edges', 'threshold', 'waves', 'none'],
-      'pixel-sort-sorting': ['lightness', 'hue', 'saturation', 'intensity', 'minimum'],
-      'pixel-sort-randomness': [str(x) for x in np.arange(0.0, 1.0, 0.05)],
-      'pixel-sort-charlength': [str(x) for x in range(1,30)],
-      'pixel-sort-lowerthreshold': [str(x) for x in np.arange(0.0, 0.25, 0.01)],
-      'pixel-sort-upperthreshold': [str(x) for x in np.arange(0.0, 1.0, 0.01)],
-      # flow field parameters
-      'flow-field-type': ['edgy', 'curves'],
-      'flow-field-zoom': [str(x) for x in np.arange(0.001, 0.5, 0.001)],
-    }
-    grammar = tracery.Grammar(rules)
     opensimplex.seed(random.randint(0,100000))
 
     # pull in cmd-line parameters
     num_gens = args.generations
     pop_size = args.population_size
+
+    # create output dir if it doesn't exist
+    if not os.path.exists(args.output_dir): os.mkdir(args.output_dir)
 
     xover_rate = args.crossover_rate
     mut_rate = args.mutation_rate
@@ -314,9 +295,9 @@ if __name__ == "__main__":
     for i in range(len(population)):
         print(population[i].id, population[i].fitness, population[i].grammar)
         if i == 0:
-            population[i].image.save("best-img-{0}.{1}.png".format(population[i].id, run_type))
+            population[i].image.save(os.path.join(args.output_dir, "best-img-{0}.{1}.png".format(population[i].id, run_type)))
         else:
-            population[i].image.save("img-{0}.{1}.png".format(population[i].id, run_type))
+            population[i].image.save(os.path.join(args.output_dir, "img-{0}.{1}.png".format(population[i].id, run_type)))
     print("---")
     print("End of line.")
 
