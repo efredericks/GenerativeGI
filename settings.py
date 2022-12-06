@@ -12,6 +12,7 @@ rules = {
                 'wolfram-ca:',
                 'flow-field:#flow-field-type#:#flow-field-zoom#', 
                 'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#', 
+                'drunkardsWalk:',
                 'dither:'],
     # pixel sort parameters
     'pixel-sort-angle': [str(x) for x in range(0,360)],

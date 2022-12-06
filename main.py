@@ -2,8 +2,8 @@
 #   FF1: maximize diversity on canvas
 #   FF2: minimize size of generated code
 
-# Note: at present I do not delete the Image object when creating a child as it 
-# seems to be generating more "interesting" outputs than if I were to replace the 
+# Note: at present I do not delete the Image object when creating a child as it
+# seems to be generating more "interesting" outputs than if I were to replace the
 # Image attribute with a blank canvas.
 
 from PIL import Image, ImageDraw, ImageChops
@@ -30,14 +30,18 @@ parser.add_argument('--random_eval', action='store_true', default=False)
 parser.add_argument('--output_dir', default='.')
 args = parser.parse_args()
 
+
 # Accepts a GenerativeObject and iterates over its grammar, performing the technique specified
-def evaluate(g):#id, dim, grammar):
+def evaluate(g):  #id, dim, grammar):
     print("Evaluating {0}:{1}".format(g.id, g.grammar))
     for technique in g.grammar.split(','):
-        _technique = technique.split(":") # split off parameters
-        c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+        _technique = technique.split(":")  # split off parameters
+        c = (random.randint(0,
+                            255), random.randint(0,
+                                                 255), random.randint(0, 255))
         if _technique[0] == 'flow-field':
-            flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1], _technique[2], _technique[2])
+            flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1],
+                      _technique[2], _technique[2])
         elif _technique[0] == 'stippled':
             stippledBG(g.image, c, g.dim)
         elif _technique[0] == 'pixel-sort':
@@ -54,16 +58,21 @@ def evaluate(g):#id, dim, grammar):
             g.image = simpleDither(g.image)
         elif _technique[0] == 'wolfram-ca':
             WolframCA(g.image)
+        elif _technique[0] == 'drunkardsWalk':
+            drunkardsWalk(g.image)
+
     return g
+
 
 # Evaluate all 'unevaluated' members of the current population
 def evaluatePopulation(_population):
     unevaluated = list(filter(lambda x: not x.isEvaluated, _population))
-    with mpc.Pool(mpc.cpu_count()-3) as p:
-    # with mpc.Pool(4) as p:
+    with mpc.Pool(mpc.cpu_count() - 3) as p:
+        # with mpc.Pool(4) as p:
         retval = p.starmap(evaluate, zip(unevaluated))
         for i in range(len(retval)):
-            assert unevaluated[i].id == retval[i].id, "Error with ID match on re-joining."
+            assert unevaluated[i].id == retval[
+                i].id, "Error with ID match on re-joining."
             unevaluated[i].isEvaluated = True
             unevaluated[i].image = retval[i].image
 
@@ -71,14 +80,16 @@ def evaluatePopulation(_population):
 # Fill in the passed in list with random population members up to the population_size parameter
 def generatePopulation(_population, gen, pop_size):
     ret_pop = _population.copy()
-    print("Generating new population from size {0} to size {1}".format(len(_population), pop_size))
+    print("Generating new population from size {0} to size {1}".format(
+        len(_population), pop_size))
     i = 0
     while len(ret_pop) < pop_size:
-        idx = "{0}_{1}".format(str(gen),i)
+        idx = "{0}_{1}".format(str(gen), i)
         g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
         ret_pop.append(g)
         i += 1
     return ret_pop
+
 
 # Compare each population member to each other population member (this one uses RMS difference)
 # and set its fitness to be the greatest 'difference'
@@ -94,7 +105,7 @@ def pairwiseComparison(_population):
         numblack = count_nonblack_pil(p.image)
         if numblack == 0:
             p.setFitness(-1.0)
-        else: 
+        else:
             for p2 in _population:
                 if p != p2:
                     maxUniques2 = len(set(p2.grammar.split(',')))
@@ -107,49 +118,51 @@ def pairwiseComparison(_population):
                     if not id1 in keys or not id2 in keys:
                         diff = rmsdiff(p.image, p2.image)
 
-                        if (diff > maxDiff): 
+                        if (diff > maxDiff):
                             maxDiff = diff
                         compared[id1] = True
                         psum += diff
-            psum /= (len(_population)-1)
+            psum /= (len(_population) - 1)
             p.setFitness(psum)
 
     # actual fitness?
     for p in _population:
         lenTechniques = len(set(p.grammar.split(',')))
-        p.setFitness((0.5*(p.getFitness()/maxDiff)) + (0.5*(lenTechniques/maxUniques)))
+        p.setFitness((0.5 * (p.getFitness() / maxDiff)) +
+                     (0.5 * (lenTechniques / maxUniques)))
 
 
-# Perform single-point crossover 
+# Perform single-point crossover
 def singlePointCrossover(_population, _next_pop, num_xover):
-    for j in range(int(num_xover/2)):
-        id1 = random.randint(0,len(_population)-1)
-        id2 = random.randint(0,len(_population)-1)
+    for j in range(int(num_xover / 2)):
+        id1 = random.randint(0, len(_population) - 1)
+        id2 = random.randint(0, len(_population) - 1)
         while id1 == id2:
-            id2 = random.randint(0,len(_population)-1)
-        
+            id2 = random.randint(0, len(_population) - 1)
+
         # children
         c1 = deepcopy(_population[id1])
         c2 = deepcopy(_population[id2])
 
         c1.isEvaluated = False
         c2.isEvaluated = False
-        c1.id += "_c_{0}1_g{1}".format(j,gen)
-        c2.id += "_c_{0}2_g{1}".format(j,gen)
+        c1.id += "_c_{0}1_g{1}".format(j, gen)
+        c2.id += "_c_{0}2_g{1}".format(j, gen)
 
         split_grammar1 = _population[id1].grammar.split(",")
         split_grammar2 = _population[id2].grammar.split(",")
 
-        if len(split_grammar1) > 1 and len(split_grammar2) > 1: 
+        if len(split_grammar1) > 1 and len(split_grammar2) > 1:
             # crossover for variable length
             # pick an index each and flop
-            xover_idx1 = random.randint(1,len(split_grammar1)-1)
-            xover_idx2 = random.randint(1,len(split_grammar2)-1)
+            xover_idx1 = random.randint(1, len(split_grammar1) - 1)
+            xover_idx2 = random.randint(1, len(split_grammar2) - 1)
 
             new_grammar1 = []
             new_grammar2 = []
 
-            print(len(split_grammar1),len(split_grammar2),xover_idx1,xover_idx2)
+            print(len(split_grammar1), len(split_grammar2), xover_idx1,
+                  xover_idx2)
             # up to indices
             for i in range(xover_idx1):
                 new_grammar1.append(split_grammar1[i])
@@ -161,24 +174,27 @@ def singlePointCrossover(_population, _next_pop, num_xover):
                 new_grammar2.append(split_grammar1[i])
             for i in range(xover_idx2, len(split_grammar2)):
                 new_grammar1.append(split_grammar2[i])
-        
-        else: # one of the genomes was length 1
+
+        else:  # one of the genomes was length 1
             new_grammar1 = []
             new_grammar2 = []
 
             if len(split_grammar1) == 1:
                 new_grammar2 = split_grammar2.copy()
-                new_grammar2.insert(random.randint(0,len(split_grammar2)),split_grammar1[0])
+                new_grammar2.insert(random.randint(0, len(split_grammar2)),
+                                    split_grammar1[0])
 
                 new_grammar1 = split_grammar2.copy()
-                new_grammar1.insert(random.randint(0,len(split_grammar2)),split_grammar1[0])
+                new_grammar1.insert(random.randint(0, len(split_grammar2)),
+                                    split_grammar1[0])
             else:
                 new_grammar2 = split_grammar1.copy()
-                new_grammar2.insert(random.randint(0,len(split_grammar1)),split_grammar2[0])
+                new_grammar2.insert(random.randint(0, len(split_grammar1)),
+                                    split_grammar2[0])
 
                 new_grammar1 = split_grammar1.copy()
-                new_grammar1.insert(random.randint(0,len(split_grammar1)),split_grammar2[0])
-
+                new_grammar1.insert(random.randint(0, len(split_grammar1)),
+                                    split_grammar2[0])
 
         c1.grammar = ",".join(new_grammar1)
         c2.grammar = ",".join(new_grammar2)
@@ -190,18 +206,19 @@ def singlePointCrossover(_population, _next_pop, num_xover):
         print(c2.id, c2.grammar, _population[id2].id, _population[id2].grammar)
         print("---")
 
+
 # And single-point mutation
 def singlePointMutation(_population, _next_pop, num_mut):
     for j in range(num_mut):
-        pop_id = random.randint(0,len(_population)-1)
+        pop_id = random.randint(0, len(_population) - 1)
         mutator = deepcopy(_population[pop_id])
-        mutator.id += "_m_{0}_g{1}".format(j,gen)
+        mutator.id += "_m_{0}_g{1}".format(j, gen)
         #mutator.image = Image.new("RGBA", DIM, "black")
         # leaving the 'old' image makes it look neater imo...
         mutator.isEvaluated = False
 
         split_grammar = mutator.grammar.split(",")
-        mut_idx = random.randint(0,len(split_grammar)-1)
+        mut_idx = random.randint(0, len(split_grammar) - 1)
         local_grammar = grammar.flatten("#technique#")
         split_grammar[mut_idx] = local_grammar
         mutator.grammar = ",".join(split_grammar)
@@ -210,7 +227,7 @@ def singlePointMutation(_population, _next_pop, num_mut):
 
 
 if __name__ == "__main__":
-    opensimplex.seed(random.randint(0,100000))
+    opensimplex.seed(random.randint(0, 100000))
 
     # pull in cmd-line parameters
     num_gens = args.generations
@@ -223,7 +240,7 @@ if __name__ == "__main__":
     mut_rate = args.mutation_rate
     population = []
 
-    if args.random_eval: # random
+    if args.random_eval:  # random
         run_type = "random"
         pop_size = num_gens * pop_size
         print("Random evaluation")
@@ -234,12 +251,12 @@ if __name__ == "__main__":
 
         # pair-wise comparison
         pairwiseComparison(population)
-                
+
         population.sort(key=lambda x: x.fitness, reverse=True)
-    else: # ga
+    else:  # ga
         run_type = "ga"
         ##### GENERATION 0
-        print("Generation",0)
+        print("Generation", 0)
         population = generatePopulation(population, 0, pop_size)
 
         # initial evaluation
@@ -247,20 +264,21 @@ if __name__ == "__main__":
 
         # pair-wise comparison
         pairwiseComparison(population)
-                
+
         population.sort(key=lambda x: x.fitness, reverse=True)
-        print("Generation {0} best fitness: {1}, {2}, {3}".format(0, population[0].fitness, population[0].grammar, population[0].id))
+        print("Generation {0} best fitness: {1}, {2}, {3}".format(
+            0, population[0].fitness, population[0].grammar, population[0].id))
         print("---")
         #####################
 
-        for gen in range(1,num_gens):
-            print("Generation",gen)
+        for gen in range(1, num_gens):
+            print("Generation", gen)
 
             num_xover = int(pop_size * xover_rate)
             num_mut = int(pop_size * mut_rate)
             next_pop = []
 
-            next_pop.append(deepcopy(population[0])) # elite
+            next_pop.append(deepcopy(population[0]))  # elite
 
             # crossover
             singlePointCrossover(population, next_pop, num_xover)
@@ -276,10 +294,12 @@ if __name__ == "__main__":
 
             # pair-wise comparison
             pairwiseComparison(next_pop)
-                    
+
             # Sorting and cleanup
             next_pop.sort(key=lambda x: x.fitness, reverse=True)
-            print("Generation {0} best fitness: {1}, {2}, {3}".format(gen, population[0].fitness, population[0].grammar, population[0].id))
+            print("Generation {0} best fitness: {1}, {2}, {3}".format(
+                gen, population[0].fitness, population[0].grammar,
+                population[0].id))
             print("---")
             del population
             population = next_pop
@@ -295,9 +315,14 @@ if __name__ == "__main__":
     for i in range(len(population)):
         print(population[i].id, population[i].fitness, population[i].grammar)
         if i == 0:
-            population[i].image.save(os.path.join(args.output_dir, "best-img-{0}.{1}.png".format(population[i].id, run_type)))
+            population[i].image.save(
+                os.path.join(
+                    args.output_dir,
+                    "best-img-{0}.{1}.png".format(population[i].id, run_type)))
         else:
-            population[i].image.save(os.path.join(args.output_dir, "img-{0}.{1}.png".format(population[i].id, run_type)))
+            population[i].image.save(
+                os.path.join(
+                    args.output_dir,
+                    "img-{0}.{1}.png".format(population[i].id, run_type)))
     print("---")
     print("End of line.")
-
