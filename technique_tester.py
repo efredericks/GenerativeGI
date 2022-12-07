@@ -8,7 +8,13 @@ background = "black"
 if __name__ == "__main__":
     image = Image.new("RGBA", DIM, background)
 
-    stippledBG(image, "red", DIM)
-    image.save("temp.png")
-    image = simpleDither(image)
-    image.save("temp.dither.png")
+    drunkenWalk(image)
+    image.save("drunk.png")
+
+    #WolframCA(image)
+    #image.save("wolfram.png")
+
+    #stippledBG(image, "red", DIM)
+    #image.save("temp.png")
+    #image = simpleDither(image)
+    #image.save("temp.dither.png")
