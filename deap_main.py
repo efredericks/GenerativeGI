@@ -21,7 +21,8 @@ from generative_object import GenerativeObject
 
 # Accepts a GenerativeObject and iterates over its grammar, performing the technique specified
 def evaluate_ind(g):#id, dim, grammar):
-    img = evol_utils.evaluate_individual(g)
+    return evol_utils.evaluate_individual(g)
+    
 
 
 # TODO: Establish what the initial fitnesses are.
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     #slices = slices+[args.pop_size] if slices[-1] < args.pop_size else slices
 
     # Run the first set of evaluations.
-    images = toolbox.map(toolbox.evaluate, pop)
+    pop = toolbox.map(toolbox.evaluate, pop)
 
     # Calculate fitnesses once all the individuals have generated images.
     fitnesses = evol_utils.pairwiseComparison(pop)
@@ -209,3 +210,9 @@ if __name__ == '__main__':
 
     #if args.evol_type == 'lexicase':
     evol_utils.Logging.writeLexicaseOrdering(lex_log_file)
+
+     # Print out last generation
+    for i in range(len(pop)):
+        print(pop[i]._id, pop[i].fitness.values, pop[i].grammar)
+        pop[i].image.save("img-{0}.png".format(pop[i]._id))
+    

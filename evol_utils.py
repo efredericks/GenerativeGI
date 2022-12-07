@@ -54,7 +54,7 @@ class ExperimentSettings(object):
     
     grammar = tracery.Grammar(rules)  
 
-    DIM = (1000,1000)
+    DIM = (10,10)
 
 ##########################################################################################
 # Logging Methods
@@ -144,7 +144,7 @@ def evaluate_individual(g):
     Returns:
         image an individual generates
     """
-    print("Evaluating {0}:{1}".format(g._id, g.grammar))
+    # print("Evaluating {0}:{1}".format(g._id, g.grammar))
     for technique in g.grammar.split(','):
         _technique = technique.split(":") # split off parameters
         c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
@@ -173,7 +173,6 @@ def pairwiseComparison(_population):
     maxDiff = 0.0
     compared = {}
     for p in _population:
-        print(p.__dict__)
         maxUniques = len(set(p.grammar.split(',')))
         psum = 0
 
@@ -188,8 +187,8 @@ def pairwiseComparison(_population):
                     if maxUniques2 > maxUniques:
                         maxUniques = maxUniques2
 
-                    id1 = "{0}:{1}".format(p.id, p2.id)
-                    id2 = "{0}:{1}".format(p2.id, p.id)
+                    id1 = "{0}:{1}".format(p._id, p2._id)
+                    id2 = "{0}:{1}".format(p2._id, p._id)
                     keys = compared.keys()
                     if not id1 in keys or not id2 in keys:
                         diff = rmsdiff(p.image, p2.image)
