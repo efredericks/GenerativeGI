@@ -36,9 +36,7 @@ def evaluate(g):  #id, dim, grammar):
     print("Evaluating {0}:{1}".format(g.id, g.grammar))
     for technique in g.grammar.split(','):
         _technique = technique.split(":")  # split off parameters
-        c = (random.randint(0,
-                            255), random.randint(0,
-                                                 255), random.randint(0, 255))
+        c = (random.randint(0,255), random.randint(0,255), random.randint(0, 255))
         if _technique[0] == 'flow-field':
             flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1],
                       _technique[2], _technique[2])
@@ -85,7 +83,8 @@ def generatePopulation(_population, gen, pop_size):
     i = 0
     while len(ret_pop) < pop_size:
         idx = "{0}_{1}".format(str(gen), i)
-        g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
+        #g = GenerativeObject(idx, DIM, grammar.flatten("#ordered_pattern#"))
+        g = GenerativeObject(DIM, grammar.flatten("#ordered_pattern#"), background='black', idx=idx)
         ret_pop.append(g)
         i += 1
     return ret_pop
@@ -252,7 +251,7 @@ if __name__ == "__main__":
         # pair-wise comparison
         pairwiseComparison(population)
 
-        population.sort(key=lambda x: x.fitness, reverse=True)
+        population.sort(key=lambda x: x.fitness_internal, reverse=True)
     else:  # ga
         run_type = "ga"
         ##### GENERATION 0
@@ -265,9 +264,9 @@ if __name__ == "__main__":
         # pair-wise comparison
         pairwiseComparison(population)
 
-        population.sort(key=lambda x: x.fitness, reverse=True)
+        population.sort(key=lambda x: x.fitness_internal, reverse=True)
         print("Generation {0} best fitness: {1}, {2}, {3}".format(
-            0, population[0].fitness, population[0].grammar, population[0].id))
+            0, population[0].fitness_internal, population[0].grammar, population[0].id))
         print("---")
         #####################
 
@@ -296,9 +295,9 @@ if __name__ == "__main__":
             pairwiseComparison(next_pop)
 
             # Sorting and cleanup
-            next_pop.sort(key=lambda x: x.fitness, reverse=True)
+            next_pop.sort(key=lambda x: x.fitness_internal, reverse=True)
             print("Generation {0} best fitness: {1}, {2}, {3}".format(
-                gen, population[0].fitness, population[0].grammar,
+                gen, population[0].fitness_internal, population[0].grammar,
                 population[0].id))
             print("---")
             del population
@@ -307,13 +306,13 @@ if __name__ == "__main__":
         # Final evaluation
         evaluatePopulation(population)
         pairwiseComparison(population)
-        population.sort(key=lambda x: x.fitness, reverse=True)
+        population.sort(key=lambda x: x.fitness_internal, reverse=True)
 
     # Print out last generation
     print("Final output:")
 
     for i in range(len(population)):
-        print(population[i].id, population[i].fitness, population[i].grammar)
+        print(population[i].id, population[i].fitness_internal, population[i].grammar)
         if i == 0:
             population[i].image.save(
                 os.path.join(
