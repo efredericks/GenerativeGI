@@ -1,0 +1,10 @@
+{
+  "gens": 2,
+  "pop_size": 10,
+  "treatment": 0,
+  "run_num": 0,
+  "output_path": "outputs_deap",
+  "lexicase": false,
+  "shuffle": false,
+  "tourn_size": 4
+}
