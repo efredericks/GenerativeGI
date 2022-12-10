@@ -148,11 +148,31 @@ def evaluate_individual(g):
         image an individual generates
     """
     # print("Evaluating {0}:{1}".format(g._id, g.grammar))
+    # for technique in g.grammar.split(','):
+    #     _technique = technique.split(":") # split off parameters
+    #     c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+    #     if _technique[0] == 'flow-field':
+    #         flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1], _technique[2], _technique[2])
+    #     elif _technique[0] == 'stippled':
+    #         stippledBG(g.image, c, g.dim)
+    #     elif _technique[0] == 'pixel-sort':
+    #         # 1: angle
+    #         # 2: interval
+    #         # 3: sorting algorithm
+    #         # 4: randomness
+    #         # 5: character length
+    #         # 6: lower threshold
+    #         # 7: upper threshold
+    #         g.image = pixelSort(g.image, _technique[1:])
+
+    #     elif _technique[0] == 'dither':
+    #         g.image = simpleDither(g.image)
     for technique in g.grammar.split(','):
-        _technique = technique.split(":") # split off parameters
-        c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+        _technique = technique.split(":")  # split off parameters
+        c = (random.randint(0,255), random.randint(0,255), random.randint(0, 255))
         if _technique[0] == 'flow-field':
-            flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1], _technique[2], _technique[2])
+            flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1],
+                      _technique[2], _technique[2])
         elif _technique[0] == 'stippled':
             stippledBG(g.image, c, g.dim)
         elif _technique[0] == 'pixel-sort':
@@ -167,6 +187,11 @@ def evaluate_individual(g):
 
         elif _technique[0] == 'dither':
             g.image = simpleDither(g.image)
+        elif _technique[0] == 'wolfram-ca':
+            WolframCA(g.image)
+        elif _technique[0] == 'drunkardsWalk':
+            drunkardsWalk(g.image)
+
     return g
 
 # Compare each population member to each other population member (this one uses RMS difference)
