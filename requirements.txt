@@ -1,4 +1,5 @@
 opensimplex==0.4.3
 tracery==0.1.1
+perlin-noise==1.12
 pixelsort==1.0.1
 Pillow==9.2.0

@@ -1,5 +1,6 @@
 import tracery
 import numpy as np
+from colour_palettes import palettes
 
 DIM = (1000, 1000)
 
@@ -12,7 +13,9 @@ rules = {
         'stippled:', 'wolfram-ca:',
         'flow-field:#flow-field-type#:#flow-field-zoom#',
         'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#',
-        'drunkardsWalk:', 'dither:'
+        'drunkardsWalk:', 'dither:',
+        'flow-field-2:#palette#:#flow-field-2-type#:#flow-field-2-noisescale#:#flow-field-2-resolution#',
+        'circle-packing:#palette#:#circle-packing-limit#'
     ],
     # pixel sort parameters
     'pixel-sort-angle': [str(x) for x in range(0, 360)],
@@ -26,5 +29,13 @@ rules = {
     # flow field parameters
     'flow-field-type': ['edgy', 'curves'],
     'flow-field-zoom': [str(x) for x in np.arange(0.001, 0.5, 0.001)],
+    # flow field v2 parameters
+    'flow-field-2-type': ['edgy','curvy'],
+    'flow-field-2-noisescale': [str(x) for x in range(200, 600)],
+    'flow-field-2-resolution': [str(x) for x in range(2, 5)],
+    # circle packing parameters
+    'circle-packing-limit': [str(x) for x in range(10, 30)],
+    # colour palettes
+    'palette': [x for x in palettes]
 }
 grammar = tracery.Grammar(rules)

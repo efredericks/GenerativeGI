@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageChops
 import opensimplex
+from perlin_noise import PerlinNoise
 from pixelsort import pixelsort
 import random
 import math
@@ -284,6 +285,149 @@ def WolframCA(img):
 
         cells, generation = WolframCAGenerate(cells, generation, ruleset)
     return
+
+
+def flowField2(img, palette, flowtype, noisescale, resolution):
+    draw = ImageDraw.Draw(img)
+    
+    # unpack strings
+    noisescale = int(noisescale)
+    resolution = int(resolution)
+
+    # get list of hex values
+    palette = palette.split(" ")
+    for i, hex in enumerate(palette):
+        palette[i] = "#" + hex
+
+    particles = []
+    noise = PerlinNoise()
+
+    # add particles along top and bottom
+    for x in range(0, DIM[0], resolution):
+        r = random.random()
+        if r < 0.5:
+            p = {'x': x, 'y': 0, 'colour': random.choice(palette)}
+            particles.append(p)
+        else:
+            p = {'x': x, 'y': DIM[1], 'colour': random.choice(palette)}
+            particles.append(p)
+        x += resolution
+
+    # add particles along left and right sides
+    for y in range(0, DIM[1], resolution):
+        r = random.random()
+        if r < 0.5:
+            p = {'x': 0, 'y': y, 'colour': random.choice(palette)}
+            particles.append(p)
+        else:
+            p = {'x': DIM[0], 'y': y, 'colour': random.choice(palette)}
+            particles.append(p)
+        y += resolution
+
+    while len(particles) > 0:
+        for i in range(len(particles)-1, -1, -1):
+            p = particles[i]
+
+            draw.point((p['x'], p['y']), p['colour'])
+            noiseval = noise([p['x'] / noisescale, p['y'] / noisescale])
+            
+            if (flowtype == "curvy"):
+                angle = p5map(noiseval, -1.0, 1.0, 0.0, math.pi * 2.0)
+            if (flowtype == "edgy"):
+                angle = math.ceil(p5map(noiseval, -1.0, 1.0, 0.0, math.pi * 2) * (math.pi / 2)) / (math.pi / 2)
+
+            p['x'] += math.cos(angle)
+            p['y'] += math.sin(angle)
+
+            # check edge
+            if (p['x'] < 0 or p['x'] > DIM[0] or p['y'] < 0 or p['y'] > DIM[1]):
+                particles.pop(i)
+    return 
+
+# TBD: fix overlap issue
+def circlePacking(img, palette, limit):
+    draw = ImageDraw.Draw(img)
+    
+    # unpack strings
+    limit = int(limit)
+
+    # get list of hex values
+    palette = palette.split(" ")
+    for i, hex in enumerate(palette):
+        palette[i] = "#" + hex
+
+    circles = []
+    total = 7   # circles to add each loop
+    
+    while True:
+        count = 0
+        failures = 0
+        finished = False
+
+        while count < total:
+            # random centerpoint 
+            x = random.randrange(DIM[0])
+            y = random.randrange(DIM[1])
+            valid = True
+
+            for c in circles:
+                # distance between new circle centerpoint and existing circle centerpoint
+                d = math.dist([x,y], [c['x'],c['y']])
+                
+                if d < c['radius']:
+                    valid = False
+                    break
+            
+            if valid:
+                newC = {'x': x, 'y': y, 'radius': 1, 'colour': random.choice(palette), 'growing': True}
+                circles.append(newC)
+                count += 1
+            else:
+                failures += 1
+            if failures >= limit:
+                finished = True
+                break
+                
+        if finished:
+            break
+
+        # grow circles, check edges
+        for c in circles:
+            x = c['x']
+            y = c['y']
+            radius = c['radius']
+            
+            growing = c['growing']
+            
+            if growing:
+                # check if circle hit canvas edge
+                if x+radius >= DIM[0] or x-radius <= 0 or y+radius >= DIM[1] or y-radius <= 0:
+                    c['growing'] = False
+                else:
+                    # check if circle hit other circle
+                    for c2 in circles:
+                        x2 = c2['x']
+                        y2 = c2['y']
+                        radius2 = c2['radius']
+                        if c != c2:
+                            d = math.dist([x,y], [x2,y2])
+                            # check if circles hit each other, with small buffer
+                            if d - 4 < radius + radius2:
+                                c['growing'] = False
+                                break
+            if growing:
+                # grow
+                c['radius'] += 1
+    
+    # display
+    for c in circles:
+        x = c['x']
+        y = c['y']
+        radius = c['radius']
+        
+        draw.ellipse(xy = (x-radius, y-radius, x+radius, y+radius),
+            fill = c['colour'],
+            width = radius)
 
 
 # ---
