@@ -374,7 +374,7 @@ def circlePacking(img, palette, limit):
                 # distance between new circle centerpoint and existing circle centerpoint
                 d = math.dist([x,y], [c['x'],c['y']])
                 
-                if d < c['radius']:
+                if d < c['radius'] + 3:
                     valid = False
                     break
             
@@ -424,10 +424,13 @@ def circlePacking(img, palette, limit):
         x = c['x']
         y = c['y']
         radius = c['radius']
-        
-        draw.ellipse(xy = (x-radius, y-radius, x+radius, y+radius),
-            fill = c['colour'],
-            width = radius)
+
+        if radius == 1:
+            pass
+        else:
+            draw.ellipse(xy = (x-radius, y-radius, x+radius, y+radius),
+                fill = c['colour'],
+                width = radius)
 
 
 # ---
