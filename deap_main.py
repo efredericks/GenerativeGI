@@ -122,10 +122,10 @@ if __name__ == '__main__':
     fitnesses = []
 
     # Multiprocessing component.
-    # cores = mpc.cpu_count()
-    # pool = mpc.Pool(processes=cores-2)
-    pool = mpc.Pool(processes=1)
-    toolbox.register("map", pool.map)
+    cores = mpc.cpu_count()
+    pool = mpc.Pool(processes=cores-2)
+    # pool = mpc.Pool(processes=1)
+    # toolbox.register("map", pool.map)
 
     # Slice population if size is over 240.  (OSError on cluster)
     #slices = [0,args.pop_size] if args.pop_size <= 240 else [i for i in range(0,args.pop_size+1,120)]
