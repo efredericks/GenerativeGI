@@ -125,7 +125,7 @@ if __name__ == '__main__':
     cores = mpc.cpu_count()
     pool = mpc.Pool(processes=cores-2)
     # pool = mpc.Pool(processes=1)
-    # toolbox.register("map", pool.map)
+    toolbox.register("map", pool.map)
 
     # Slice population if size is over 240.  (OSError on cluster)
     #slices = [0,args.pop_size] if args.pop_size <= 240 else [i for i in range(0,args.pop_size+1,120)]
@@ -135,6 +135,7 @@ if __name__ == '__main__':
     pop = toolbox.map(toolbox.evaluate, pop)
 
     # Calculate fitnesses once all the individuals have generated images.
+    # print(type(pop))
     fitnesses = evol_utils.pairwiseComparison(pop)
 
     for ind, fit in zip(pop, fitnesses):
