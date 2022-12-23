@@ -215,5 +215,5 @@ if __name__ == '__main__':
      # Print out last generation
     for i in range(len(pop)):
         print(pop[i]._id, pop[i].fitness.values, pop[i].grammar)
-        pop[i].image.save("./{0}/img-{1}.png".format(args.output_path, pop[i]._id))
+        pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
     
