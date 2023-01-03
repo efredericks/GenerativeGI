@@ -233,13 +233,52 @@ def pairwiseComparison(_population):
     for p in _population:
         lenTechniques = len(set(p.grammar.split(',')))
         try:
-            fitness = [(0.5*(p.getFitness()/maxDiff)) + (0.5*(lenTechniques/maxUniques))]
+            fitness = (0.5*(p.getFitness()/maxDiff)) + (0.5*(lenTechniques/maxUniques))
         except ZeroDivisionError:
             print(p._id, maxDiff, maxUniques)
-            fitness = [0.0]
+            fitness = 0.0
         p.setFitness(fitness)
         fitnesses.append(fitness)
 
+    return fitnesses
+
+# Compare each population member's genome to see how many unique genes it has.  
+# This is a minimization objective as we want to select individuals with a low score since 
+# we'll keep a count of how many others have the same gene.  It's a histogram for each 
+# unique copy of a gene.
+def uniqueGeneCount(_population):
+    genes = {}
+    for p in _population:
+        ind_genes = p.grammar.split(',')
+        
+        # Add the occurences of each gene to the genes dictionary.
+        for ig in ind_genes:
+            if ig not in genes:
+                genes[ig] = 1
+            else:
+                genes[ig] += 1
+    
+    # Tally each individuals scores based on the sweep of genes 
+    # in the population.
+    fitnesses = []
+    for p in _population:
+        ind_genes = p.grammar.split(',')
+        
+        fitnesses.append(0)
+        for ig in ind_genes:
+            fitnesses[-1] += genes[ig]
+
+    return fitnesses
+
+# Find how many unique techniques and individual has.
+def numUniqueTechniques(_population):
+    fitnesses = []
+    for p in _population:
+        techniques = []
+        for technique in p.grammar.split(','):
+            techniques.append(technique.split(":")[0])
+        # print(techniques)
+        fitnesses.append(len(set(techniques)))
     return fitnesses
 
 # Perform single-point crossover 
@@ -272,10 +311,10 @@ def singlePointCrossover(ind1, ind2):
         new_grammar1 = []
 
         if len(split_grammar1) == 1:
-            new_grammar1 = split_grammar2.copy()
+            new_grammar1 = copy.deepcopy(split_grammar2)
             new_grammar1.insert(random.randint(0,len(split_grammar2)),split_grammar1[0])
         else:
-            new_grammar1 = split_grammar1.copy()
+            new_grammar1 = copy.deepcopy(split_grammar1)
             new_grammar1.insert(random.randint(0,len(split_grammar1)),split_grammar2[0])
 
 

@@ -28,7 +28,7 @@ def evaluate_ind(g):#id, dim, grammar):
 # TODO: Establish what the initial fitnesses are.
 # Initial Fitnesses: 
 # Fit_0: 
-creator.create("Fitness", base.Fitness, weights=([1.0,]))# -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0]))
+creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0]))# -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0]))
 creator.create("Individual", GenerativeObject, fitness=creator.Fitness)
 
 if __name__ == '__main__': 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
     # Calculate fitnesses once all the individuals have generated images.
     # print(type(pop))
-    fitnesses = evol_utils.pairwiseComparison(pop)
+    fitnesses = [[p_c, g_c, u_c] for p_c, g_c, u_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop))]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
@@ -185,7 +185,7 @@ if __name__ == '__main__':
         images = toolbox.map(toolbox.evaluate, pop)
 
         # Calculate fitnesses once all the individuals have generated images.
-        fitnesses = evol_utils.pairwiseComparison(pop)
+        fitnesses = [[p_c, g_c, u_c] for p_c, g_c, u_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop))]
             
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
