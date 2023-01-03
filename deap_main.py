@@ -73,7 +73,7 @@ if __name__ == '__main__':
         # Remove the lexicase logging file.
         os.remove(lex_log_file)
 
-    # evol_utils.writeHeaders(out_fit_file, evol_utils.ExperimentSettings.num_objectives)
+    evol_utils.writeHeaders(out_fit_file, evol_utils.ExperimentSettings.num_objectives)
     resume_evolution = False
     log_interval = 100 # How many generations between logging genomes.
 
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=1)
     else:
         # Register the selection function.
-        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.95)
+        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.85)
 
     # Crossover and mutation probability
     cxpb, mutpb = 0.5, 0.4

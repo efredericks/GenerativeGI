@@ -33,6 +33,7 @@ class ExperimentSettings(object):
     treatments = [
         "baseline", #0
     ]
+    num_objectives = 3
 
     rules = rules
     # rules = {
@@ -118,7 +119,7 @@ class Logging(object):
     def writePopulationInformation(cls, filename, population):
         with open(filename, "w") as f:
             for p in population:
-                f.write(f"{p._id} \t {p.fitness.values} \t {p.grammar}")
+                f.write(f"{p._id} \t {p.fitness.values} \t {p.grammar}\n")
 
 def writeHeaders(filename, num_objectives):
     """ Write out the headers for a logging file. """
@@ -243,6 +244,7 @@ def pairwiseComparison(_population):
         except ZeroDivisionError:
             print(p._id, maxDiff, maxUniques)
             fitness = 0.0
+        #fitness = random.random() * 100
         p.setFitness(fitness)
         fitnesses.append(fitness)
 
@@ -337,13 +339,13 @@ def singlePointMutation(ind):
     # mutator.isEvaluated = False
 
     # Change a technique.
-    if random.random() < 0.5:
+    if random.random() < 0.25:
         split_grammar = mutator.grammar.split(",")
         mut_idx = random.randint(0,len(split_grammar)-1)
         local_grammar = ExperimentSettings.grammar.flatten("#technique#")
         split_grammar[mut_idx] = local_grammar
         mutator.grammar = ",".join(split_grammar)
-    else:
+    elif random.random() < 0.9:
         # Mutate an individual technique.
         split_grammar = mutator.grammar.split(",")
         mut_idx = random.randint(0,len(split_grammar)-1)
@@ -354,12 +356,19 @@ def singlePointMutation(ind):
             gene[1] = str(random.randint(0,359)) # Mutate the angle of the sort.
         elif technique == "flow-field":
             gene[1] = "edgy" if gene[1] == "curves" else "curves"
+            gene[2] = str(0.001 + random.random()*0.5)
         elif technique == "flow-field-2":
             gene[2] = "edgy" if gene[1] == "curves" else "curves"
+            gene[3] = str(random.randint(200,600))
+            gene[4] = str(random.randint(2,5))
         elif technique == "circle-packing":
             gene[2] = str(random.randint(0,40))
-                
         split_grammar[mut_idx] = ":".join(gene)
+        mutator.grammar = ",".join(split_grammar)
+    else:
+        # Shuffle the order of techniques
+        split_grammar = mutator.grammar.split(",")
+        random.shuffle(split_grammar)
         mutator.grammar = ",".join(split_grammar)
 
     return mutator
