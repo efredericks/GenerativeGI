@@ -113,6 +113,12 @@ class Logging(object):
             
         # Clear the lexicase information since we wrote it to the file.
         cls.lexicase_information = []
+        
+    @classmethod
+    def writePopulationInformation(cls, filename, population):
+        with open(filename, "w") as f:
+            for p in population:
+                f.write(f"{p._id} \t {p.fitness.values} \t {p.grammar}")
 
 def writeHeaders(filename, num_objectives):
     """ Write out the headers for a logging file. """
@@ -330,11 +336,31 @@ def singlePointMutation(ind):
     # leaving the 'old' image makes it look neater imo...
     # mutator.isEvaluated = False
 
-    split_grammar = mutator.grammar.split(",")
-    mut_idx = random.randint(0,len(split_grammar)-1)
-    local_grammar = ExperimentSettings.grammar.flatten("#technique#")
-    split_grammar[mut_idx] = local_grammar
-    mutator.grammar = ",".join(split_grammar)
+    # Change a technique.
+    if random.random() < 0.5:
+        split_grammar = mutator.grammar.split(",")
+        mut_idx = random.randint(0,len(split_grammar)-1)
+        local_grammar = ExperimentSettings.grammar.flatten("#technique#")
+        split_grammar[mut_idx] = local_grammar
+        mutator.grammar = ",".join(split_grammar)
+    else:
+        # Mutate an individual technique.
+        split_grammar = mutator.grammar.split(",")
+        mut_idx = random.randint(0,len(split_grammar)-1)
+        #print("\tMutation Attempt:",split_grammar[mut_idx])
+        gene = split_grammar[mut_idx].split(":")
+        technique = gene[0]
+        if technique == "pixel-sort":
+            gene[1] = str(random.randint(0,359)) # Mutate the angle of the sort.
+        elif technique == "flow-field":
+            gene[1] = "edgy" if gene[1] == "curves" else "curves"
+        elif technique == "flow-field-2":
+            gene[2] = "edgy" if gene[1] == "curves" else "curves"
+        elif technique == "circle-packing":
+            gene[2] = str(random.randint(0,40))
+                
+        split_grammar[mut_idx] = ":".join(gene)
+        mutator.grammar = ",".join(split_grammar)
 
     return mutator
 

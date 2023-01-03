@@ -67,6 +67,7 @@ if __name__ == '__main__':
     # Establish name of the output files and write appropriate headers.
     out_fit_file = "{}/{}/{}/{}_{}_fitnesses.dat".format(args.output_path,args.treatment,args.run_num,args.treatment,args.run_num)
     lex_log_file = "{}/{}/{}/{}_{}_lexicase_ordering_log.dat".format(args.output_path,args.treatment,args.run_num,args.treatment,args.run_num)
+    pop_log_file = "{}/{}/{}/{}_{}_population.dat".format(args.output_path,args.treatment,args.run_num,args.treatment,args.run_num)
     
     if os.path.exists(lex_log_file):
         # Remove the lexicase logging file.
@@ -212,7 +213,8 @@ if __name__ == '__main__':
     #if args.evol_type == 'lexicase':
     evol_utils.Logging.writeLexicaseOrdering(lex_log_file)
 
-     # Print out last generation
+    # Write out the last generation to a file.
+    evol_utils.Logging.writePopulationInformation(pop_log_file, pop)
     for i in range(len(pop)):
         print(pop[i]._id, pop[i].fitness.values, pop[i].grammar)
         pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
