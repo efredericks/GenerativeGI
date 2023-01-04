@@ -24,24 +24,25 @@ glob_cur_gen = 0
 
 ##########################################################################################
 
+
 class ExperimentSettings(object):
     num_environments = 1
-    num_objectives = num_environments * 7 # 4 ways to measure fitness per environment.
+    num_objectives = num_environments * 7  # 4 ways to measure fitness per environment.
 
     args = ""
 
     treatments = [
-        "baseline", #0
+        "baseline",  #0
     ]
     num_objectives = 3
 
     rules = rules
     # rules = {
-    #   'ordered_pattern': ['#techniques#'], 
+    #   'ordered_pattern': ['#techniques#'],
     #   'techniques': ['#technique#', '#techniques#,#technique#'],
-    #   'technique': ['stippled:', 
-    #                 'flow-field:#flow-field-type#:#flow-field-zoom#', 
-    #                 'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#', 
+    #   'technique': ['stippled:',
+    #                 'flow-field:#flow-field-type#:#flow-field-zoom#',
+    #                 'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#',
     #                 'dither:'],
     #   # pixel sort parameters
     #   'pixel-sort-angle': [str(x) for x in range(0,360)],
@@ -54,11 +55,12 @@ class ExperimentSettings(object):
     #   # flow field parameters
     #   'flow-field-type': ['edgy', 'curves'],
     #   'flow-field-zoom': [str(x) for x in np.arange(0.001, 0.5, 0.001)],
-    # }  
-    
-    grammar = tracery.Grammar(rules)  
+    # }
 
-    DIM = DIM#(10,10)
+    grammar = tracery.Grammar(rules)
+
+    DIM = DIM  #(10,10)
+
 
 ##########################################################################################
 # Logging Methods
@@ -74,76 +76,83 @@ def cleanFitnessFile(filepath, trtmnt=-1, rep=-1, last_gen=-1):
     
     """
     data = []
-    with open(filepath+"/{}_{}_fitnesses.dat".format(trtmnt, rep), "r") as f:
+    with open(filepath + "/{}_{}_fitnesses.dat".format(trtmnt, rep), "r") as f:
         # Read in the header row.
         data.append(f.readline())
 
         for line in f.readlines():
             spl_line = line.split(',')
 
-            # Determine if we should stop processing 
-            # data as we've exceeded the last 
+            # Determine if we should stop processing
+            # data as we've exceeded the last
             # generation we have data for.
             if int(spl_line) > last_gen:
                 break
 
             data.append(line)
-    
-    with open(filepath+"/{}_{}_fitnesses.dat".format(trtmnt, rep), "w") as f:
+
+    with open(filepath + "/{}_{}_fitnesses.dat".format(trtmnt, rep), "w") as f:
         for d in data:
             f.write(d)
 
+
 class Logging(object):
-    """ Handle logging of information for evolution. """ 
+    """ Handle logging of information for evolution. """
 
     lexicase_information = []
 
     @classmethod
-    def writeLexicaseOrdering(cls,filename):
+    def writeLexicaseOrdering(cls, filename):
         """ Write out the ordering of the fitness metrics selected per generation with lexicase. """
         if not os.path.exists(filename):
             # File does not yet exist, write headers.
             with open(filename, "w") as f:
                 # Write Headers
-                f.write("Gen, Sel_Event, Objective, Individuals, Sel_Ind\n")    
+                f.write("Gen, Sel_Event, Objective, Individuals, Sel_Ind\n")
 
         # Write out the information.
-        with open(filename,"a") as f:
+        with open(filename, "a") as f:
             for line in cls.lexicase_information:
-                f.write(','.join(str(i) for i in line)+"\n")
-            
+                f.write(','.join(str(i) for i in line) + "\n")
+
         # Clear the lexicase information since we wrote it to the file.
         cls.lexicase_information = []
-        
+
     @classmethod
     def writePopulationInformation(cls, filename, population):
         with open(filename, "w") as f:
             for p in population:
                 f.write(f"{p._id} \t {p.fitness.values} \t {p.grammar}\n")
 
+
 def writeHeaders(filename, num_objectives):
     """ Write out the headers for a logging file. """
     # pass
-    with open(filename,"w") as f:
+    with open(filename, "w") as f:
         f.write("Gen,Ind")
         for i in range(num_objectives):
             f.write(",Fit_{}".format(i))
-        f.write("\n")        
+        f.write("\n")
 
-def writeGeneration(filename,generation,individuals):
+
+def writeGeneration(filename, generation, individuals):
     """ Write out the fitness information for a generation. """
     # pass
-    with open(filename,"a") as f:
-        for i,ind in enumerate(individuals):
-            f.write(str(generation)+","+str(i)+",")
+    with open(filename, "a") as f:
+        for i, ind in enumerate(individuals):
+            f.write(str(generation) + "," + str(i) + ",")
             f.write(",".join(str(f) for f in ind.fitness.values))
             f.write("\n")
 
+
 ##########################################################################################
+
 
 # Non-class methods specific to the problem at hand.
 def initIndividual(ind_class):
-    return ind_class(ExperimentSettings.DIM, ExperimentSettings.grammar.flatten("#ordered_pattern#"))
+    return ind_class(ExperimentSettings.DIM,
+                     ExperimentSettings.grammar.flatten("#ordered_pattern#"))
+
 
 def evaluate_individual(g):
     """ Wrapper to evaluate an individual.  
@@ -176,7 +185,9 @@ def evaluate_individual(g):
     #         g.image = simpleDither(g.image)
     for technique in g.grammar.split(','):
         _technique = technique.split(":")  # split off parameters
-        c = (random.randint(0,255), random.randint(0,255), random.randint(0, 255))
+        c = (random.randint(0,
+                            255), random.randint(0,
+                                                 255), random.randint(0, 255))
         if _technique[0] == 'flow-field':
             flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1],
                       _technique[2], _technique[2])
@@ -199,11 +210,13 @@ def evaluate_individual(g):
         elif _technique[0] == 'drunkardsWalk':
             drunkardsWalk(g.image)
         elif _technique[0] == 'flow-field-2':
-            flowField2(g.image, _technique[1], _technique[2], _technique[3], _technique[4])
+            flowField2(g.image, _technique[1], _technique[2], _technique[3],
+                       _technique[4])
         elif _technique[0] == 'circle-packing':
             circlePacking(g.image, _technique[1], _technique[2])
 
     return g
+
 
 # Compare each population member to each other population member (this one uses RMS difference)
 # and set its fitness to be the greatest 'difference'
@@ -219,7 +232,7 @@ def pairwiseComparison(_population):
         numblack = count_nonblack_pil(p.image)
         if numblack == 0:
             p.setFitness(-1.0)
-        else: 
+        else:
             for p2 in _population:
                 if p != p2:
                     maxUniques2 = len(set(p2.grammar.split(',')))
@@ -232,11 +245,11 @@ def pairwiseComparison(_population):
                     if not id1 in keys or not id2 in keys:
                         diff = rmsdiff(p.image, p2.image)
 
-                        if (diff > maxDiff): 
+                        if (diff > maxDiff):
                             maxDiff = diff
                         compared[id1] = True
                         psum += diff
-            psum /= (len(_population)-1)
+            psum /= (len(_population) - 1)
             p.setFitness(psum)
 
     # actual fitness?
@@ -244,7 +257,8 @@ def pairwiseComparison(_population):
     for p in _population:
         lenTechniques = len(set(p.grammar.split(',')))
         try:
-            fitness = (0.5*(p.getFitness()/maxDiff)) + (0.5*(lenTechniques/maxUniques))
+            fitness = (0.5 * (p.getFitness() / maxDiff)) + (
+                0.5 * (lenTechniques / maxUniques))
         except ZeroDivisionError:
             print(p._id, maxDiff, maxUniques)
             fitness = 0.0
@@ -254,33 +268,35 @@ def pairwiseComparison(_population):
 
     return fitnesses
 
-# Compare each population member's genome to see how many unique genes it has.  
-# This is a minimization objective as we want to select individuals with a low score since 
-# we'll keep a count of how many others have the same gene.  It's a histogram for each 
+
+# Compare each population member's genome to see how many unique genes it has.
+# This is a minimization objective as we want to select individuals with a low score since
+# we'll keep a count of how many others have the same gene.  It's a histogram for each
 # unique copy of a gene.
 def uniqueGeneCount(_population):
     genes = {}
     for p in _population:
         ind_genes = p.grammar.split(',')
-        
+
         # Add the occurences of each gene to the genes dictionary.
         for ig in ind_genes:
             if ig not in genes:
                 genes[ig] = 1
             else:
                 genes[ig] += 1
-    
-    # Tally each individuals scores based on the sweep of genes 
+
+    # Tally each individuals scores based on the sweep of genes
     # in the population.
     fitnesses = []
     for p in _population:
         ind_genes = p.grammar.split(',')
-        
+
         fitnesses.append(0)
         for ig in ind_genes:
             fitnesses[-1] += genes[ig]
 
     return fitnesses
+
 
 # Find how many unique techniques and individual has.
 def numUniqueTechniques(_population):
@@ -293,22 +309,23 @@ def numUniqueTechniques(_population):
         fitnesses.append(len(set(techniques)))
     return fitnesses
 
-# Perform single-point crossover 
+
+# Perform single-point crossover
 def singlePointCrossover(ind1, ind2):
     # children
     c1 = copy.deepcopy(ind1)
-    
+
     # c1.isEvaluated = False
     # c1.id += "_c_{0}1_g{1}".format(j,gen)
 
     split_grammar1 = ind1.grammar.split(",")
     split_grammar2 = ind1.grammar.split(",")
 
-    if len(split_grammar1) > 1 and len(split_grammar2) > 1: 
+    if len(split_grammar1) > 1 and len(split_grammar2) > 1:
         # crossover for variable length
         # pick an index each and flop
-        xover_idx1 = random.randint(1,len(split_grammar1)-1)
-        xover_idx2 = random.randint(1,len(split_grammar2)-1)
+        xover_idx1 = random.randint(1, len(split_grammar1) - 1)
+        xover_idx2 = random.randint(1, len(split_grammar2) - 1)
 
         new_grammar1 = []
         # up to indices
@@ -318,21 +335,22 @@ def singlePointCrossover(ind1, ind2):
         # past indices
         for i in range(xover_idx2, len(split_grammar2)):
             new_grammar1.append(split_grammar2[i])
-        
-    else: # one of the genomes was length 1
+
+    else:  # one of the genomes was length 1
         new_grammar1 = []
 
         if len(split_grammar1) == 1:
             new_grammar1 = copy.deepcopy(split_grammar2)
-            new_grammar1.insert(random.randint(0,len(split_grammar2)),split_grammar1[0])
+            new_grammar1.insert(random.randint(0, len(split_grammar2)),
+                                split_grammar1[0])
         else:
             new_grammar1 = copy.deepcopy(split_grammar1)
-            new_grammar1.insert(random.randint(0,len(split_grammar1)),split_grammar2[0])
-
+            new_grammar1.insert(random.randint(0, len(split_grammar1)),
+                                split_grammar2[0])
 
     c1.grammar = ",".join(new_grammar1)
     return c1
-    
+
 
 # And single-point mutation
 def singlePointMutation(ind):
@@ -345,28 +363,71 @@ def singlePointMutation(ind):
     # Change a technique.
     if random.random() < 0.25:
         split_grammar = mutator.grammar.split(",")
-        mut_idx = random.randint(0,len(split_grammar)-1)
-        local_grammar = ExperimentSettings.grammar.flatten("#technique#")
+        mut_idx = random.randint(0, len(split_grammar) - 1)
+
+        # either replace with a single technique or the possibility
+        # of recursive techniques
+        flattener = "#technique#"
+        if random.random() < 0.5:
+            flattener = "#techniques#"
+        local_grammar = ExperimentSettings.grammar.flatten(flattener)
+
         split_grammar[mut_idx] = local_grammar
         mutator.grammar = ",".join(split_grammar)
     elif random.random() < 0.9:
         # Mutate an individual technique.
         split_grammar = mutator.grammar.split(",")
-        mut_idx = random.randint(0,len(split_grammar)-1)
+        mut_idx = random.randint(0, len(split_grammar) - 1)
         #print("\tMutation Attempt:",split_grammar[mut_idx])
         gene = split_grammar[mut_idx].split(":")
         technique = gene[0]
+
+        # these need to become embedded within the technique itself as a
+        # class
         if technique == "pixel-sort":
-            gene[1] = str(random.randint(0,359)) # Mutate the angle of the sort.
+            gene[1] = str(random.randint(0,
+                                         359))  # Mutate the angle of the sort.
+
+            # interval function
+            gene[2] = random.choice(
+                ['random', 'edges', 'threshold', 'waves', 'none'])
+            # sorting function
+            gene[3] = random.choice(
+                ['lightness', 'hue', 'saturation', 'intensity', 'minimum'])
+            # randomness val
+            gene[4] = str(round(random.uniform(0.0, 1.0), 2))
+            # lower threshold
+            gene[5] = str(round(random.uniform(0.0, 0.25), 2))
+            # upper threshold
+            gene[6] = str(round(random.uniform(0.0, 1.0), 2))
+
         elif technique == "flow-field":
-            gene[1] = "edgy" if gene[1] == "curves" else "curves"
-            gene[2] = str(0.001 + random.random()*0.5)
+            # gene[1] = "edgy" if gene[1] == "curves" else "curves"
+            gene[1] = random.choice(["edgy", "curves"])
+            # gene[2] = str(0.001 + random.random()*0.5)
+            gene[2] = str(round(random.uniform(0.001, 0.5), 3))
         elif technique == "flow-field-2":
-            gene[2] = "edgy" if gene[1] == "curves" else "curves"
-            gene[3] = str(random.randint(200,600))
-            gene[4] = str(random.randint(2,5))
+            gene[1] = random.choice(palettes)
+            gene[2] = random.choice(["edgy", "curvy"])
+            gene[3] = str(random.randint(200, 600))
+            gene[4] = str(round(random.uniform(2, 5), 2))
+            # gene[2] = "edgy" if gene[1] == "curves" else "curves"
+            # gene[3] = str(random.randint(200,600))
+            # gene[4] = str(random.randint(2,5))
         elif technique == "circle-packing":
-            gene[2] = str(random.randint(0,40))
+            gene[1] = random.choice(palettes)
+            gene[2] = str(random.randint(10, 30))
+
+        # no params here
+        # elif technique == "stippled":
+        #     pass
+        # elif technique == "wolfram-ca":
+        #     pass
+        # elif technique == "drunkardsWalk":
+        #     pass
+        # elif technique == "dither":
+        #     pass
+
         split_grammar[mut_idx] = ":".join(gene)
         mutator.grammar = ",".join(split_grammar)
     else:
@@ -377,7 +438,9 @@ def singlePointMutation(ind):
 
     return mutator
 
+
 ##########################################################################################
+
 
 def roulette_selection(objs, obj_wts):
     """ Select a listing of objectives based on roulette selection. """
@@ -407,11 +470,12 @@ def roulette_selection(objs, obj_wts):
                 del tmp_wts[ind]
 
                 # Rebalance the weights for the next go around.
-                tmp_wts = [k/sum(tmp_wts) for k in tmp_wts]
+                tmp_wts = [k / sum(tmp_wts) for k in tmp_wts]
             else:
                 ran_num -= sel_objs[j][1]
 
     return obj_ordering
+
 
 def select_elite(population):
     """ Select the best individual from the population by looking at the farthest distance traveled.
@@ -429,10 +493,18 @@ def select_elite(population):
         if ind.fitness.values[0] > dist:
             best_ind = ind
             dist = ind.fitness.values[0]
-    
+
     return best_ind
 
-def epsilon_lexicase_selection(population,generation,tournsize=4,shuffle=True,prim_shuffle=True,num_objectives=0,epsilon=0.9,excl_indicies=[]):
+
+def epsilon_lexicase_selection(population,
+                               generation,
+                               tournsize=4,
+                               shuffle=True,
+                               prim_shuffle=True,
+                               num_objectives=0,
+                               epsilon=0.9,
+                               excl_indicies=[]):
     """ Implements the epsilon lexicase selection algorithm proposed by LaCava, Spector, and McPhee.
 
     Selects one individual from a population by performing one individual epsilon lexicase selection event.
@@ -450,7 +522,9 @@ def epsilon_lexicase_selection(population,generation,tournsize=4,shuffle=True,pr
     global glob_fit_indicies
 
     # Get the fit indicies from the global fit indicies.
-    fit_indicies = glob_fit_indicies if not shuffle else [i for i in range(len(population[0].fitness.weights))]
+    fit_indicies = glob_fit_indicies if not shuffle else [
+        i for i in range(len(population[0].fitness.weights))
+    ]
 
     # Remove excluded indicies
     if not shuffle:
@@ -458,7 +532,7 @@ def epsilon_lexicase_selection(population,generation,tournsize=4,shuffle=True,pr
 
     # Shuffle fit indicies if passed to do so.
     if shuffle:
-        # Only shuffle "secondary" objectives leaving the first objective always 
+        # Only shuffle "secondary" objectives leaving the first objective always
         # at the forefront.
         if not prim_shuffle:
             fit_indicies = fit_indicies[1:]
@@ -472,7 +546,7 @@ def epsilon_lexicase_selection(population,generation,tournsize=4,shuffle=True,pr
         fit_indicies = fit_indicies[:num_objectives]
 
     # Sample the tournsize individuals from the population for the comparison
-    sel_inds = random.sample(population,tournsize)
+    sel_inds = random.sample(population, tournsize)
 
     tie = True
 
@@ -480,37 +554,44 @@ def epsilon_lexicase_selection(population,generation,tournsize=4,shuffle=True,pr
     # Using a threshold of epsilon (tied if within epsilon of performance)
     for k, fi in enumerate(fit_indicies):
         # Figure out if this is a minimization or maximization problem.
-        min_max = (-1*sel_inds[0].fitness.weights[fi])
+        min_max = (-1 * sel_inds[0].fitness.weights[fi])
 
         # Rank the individuals based on fitness performance for this metric.
         # Format: fit_value,index in sel_ind,rank
-        
-        fit_ranks = [[ind.fitness.values[fi],i,-1] for i,ind in enumerate(sel_inds)]
-        fit_ranks = [[i[0],i[1],j] for j,i in enumerate(sorted(fit_ranks,key=lambda x: (min_max*x[0])))]
+
+        fit_ranks = [[ind.fitness.values[fi], i, -1]
+                     for i, ind in enumerate(sel_inds)]
+        fit_ranks = [[i[0], i[1], j] for j, i in enumerate(
+            sorted(fit_ranks, key=lambda x: (min_max * x[0])))]
 
         # Check to see if we're within the threshold value.
-        for i in range(1,len(fit_ranks)):
-            if math.fabs(fit_ranks[i][0]-fit_ranks[0][0])/(fit_ranks[0][0]+0.0000001) < (1.0-epsilon):
+        for i in range(1, len(fit_ranks)):
+            if math.fabs(fit_ranks[i][0] - fit_ranks[0][0]) / (
+                    fit_ranks[0][0] + 0.0000001) < (1.0 - epsilon):
                 fit_ranks[i][2] = fit_ranks[0][2]
 
         # Check to see if we have ties.
-        for i in range(1,len(fit_ranks)):
+        for i in range(1, len(fit_ranks)):
             if fit_ranks[0][2] == fit_ranks[i][2]:
                 tie = True
-                tie_index = i+1
+                tie_index = i + 1
             elif i == 1:
                 tie = False
                 break
             else:
                 tie_index = i
                 break
-        
+
         if tie:
             sel_inds = [sel_inds[i[1]] for i in fit_ranks[:tie_index]]
-            Logging.lexicase_information.append([generation,k,fi,[ind._id for ind in sel_inds],-1])
+            Logging.lexicase_information.append(
+                [generation, k, fi, [ind._id for ind in sel_inds], -1])
         else:
             selected_individual = sel_inds[fit_ranks[0][1]]
-            Logging.lexicase_information.append([generation,k,fi,[ind._id for ind in sel_inds],selected_individual._id])
+            Logging.lexicase_information.append([
+                generation, k, fi, [ind._id for ind in sel_inds],
+                selected_individual._id
+            ])
             tie = False
             break
 
@@ -518,11 +599,16 @@ def epsilon_lexicase_selection(population,generation,tournsize=4,shuffle=True,pr
     # Select randomly from the remaining individuals in that case.
     if tie:
         selected_individual = random.choice(sel_inds)
-        Logging.lexicase_information.append([generation,-1,-1,[ind._id for ind in sel_inds],selected_individual._id])
+        Logging.lexicase_information.append([
+            generation, -1, -1, [ind._id for ind in sel_inds],
+            selected_individual._id
+        ])
 
     return selected_individual
 
+
 ##########################################################################################
+
 
 def shuffle_fit_indicies(individual, excl_indicies=[]):
     """ Shuffle the fitness indicies and record them in the lexicase log. 
