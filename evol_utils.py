@@ -198,6 +198,10 @@ def evaluate_individual(g):
             WolframCA(g.image)
         elif _technique[0] == 'drunkardsWalk':
             drunkardsWalk(g.image)
+        elif _technique[0] == 'flow-field-2':
+            flowField2(g.image, _technique[1], _technique[2], _technique[3], _technique[4])
+        elif _technique[0] == 'circle-packing':
+            circlePacking(g.image, _technique[1], _technique[2])
 
     return g
 

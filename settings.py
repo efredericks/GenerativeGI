@@ -2,6 +2,8 @@ import tracery
 import numpy as np
 from colour_palettes import palettes
 
+# palettes in other techniques!
+
 DIM = (100, 100)
 
 # tracery grammar
