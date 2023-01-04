@@ -2,7 +2,9 @@ import tracery
 import numpy as np
 from colour_palettes import palettes
 
-DIM = (1000, 1000)
+# palettes in other techniques!
+
+DIM = (100, 100)
 
 # tracery grammar
 # leave a trailing colon after each technique for the parameter list as we're splitting on colon regardless
