@@ -141,6 +141,10 @@ if __name__ == '__main__':
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
+        
+    for i in range(len(pop)):
+        print(pop[i]._id, pop[i].fitness.values, pop[i].grammar)
+        pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
 
     # Only log fitnesses if we aren't resuming from a prior checkpoint.
     if not resume_evolution:
@@ -183,7 +187,7 @@ if __name__ == '__main__':
             toolbox.mutate(mutant)
             del mutant.fitness.values
 
-        images = toolbox.map(toolbox.evaluate, pop)
+        pop = toolbox.map(toolbox.evaluate, pop)
 
         # Calculate fitnesses once all the individuals have generated images.
         fitnesses = [[p_c, g_c, u_c] for p_c, g_c, u_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop))]
