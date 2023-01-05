@@ -13,6 +13,8 @@ import opensimplex
 import tracery
 from generative_object import GenerativeObject
 from techniques import *
+import cv2
+from scipy.spatial import distance as dist
 
 from settings import *
 
@@ -204,11 +206,20 @@ def evaluate_individual(g):
             g.image = pixelSort(g.image, _technique[1:])
 
         elif _technique[0] == 'dither':
-            g.image = simpleDither(g.image)
+            if _technique[1] == 'grayscale':
+                g.image = convert_grayscale(g.image)
+            elif _technique[1] == 'halftone':
+                g.image = convert_halftoning(g.image)
+            elif _technique[1] == 'dither':
+                g.image = convert_dithering(g.image)
+            elif _technique[1] == 'primaryColors':
+                g.image = convert_primary(g.image)
+            else:
+                g.image = simpleDither(g.image)
         elif _technique[0] == 'wolfram-ca':
-            WolframCA(g.image)
+            WolframCA(g.image, _technique[1])
         elif _technique[0] == 'drunkardsWalk':
-            drunkardsWalk(g.image)
+            drunkardsWalk(g.image, palette=_technique[1])
         elif _technique[0] == 'flow-field-2':
             flowField2(g.image, _technique[1], _technique[2], _technique[3],
                        _technique[4])
@@ -231,7 +242,7 @@ def pairwiseComparison(_population):
         # image is the background color with no changes - weed out
         numblack = count_nonblack_pil(p.image)
         if numblack == 0:
-            p.setFitness(-1.0)
+            p.setFitness(0.0)
         else:
             for p2 in _population:
                 if p != p2:
@@ -255,12 +266,66 @@ def pairwiseComparison(_population):
     # actual fitness?
     fitnesses = []
     for p in _population:
-        lenTechniques = len(set(p.grammar.split(',')))
+        # lenTechniques = len(set(p.grammar.split(',')))
         try:
-            fitness = (0.5 * (p.getFitness() / maxDiff)) + (
-                0.5 * (lenTechniques / maxUniques))
+            # fitness = (0.5 * (p.getFitness() / maxDiff)) + (
+            #     0.5 * (lenTechniques / maxUniques))
+            fitness = p.getFitness() / maxDiff
         except ZeroDivisionError:
-            print(p._id, maxDiff, maxUniques)
+            print(p._id, maxDiff)#, maxUniques)
+            fitness = 0.0
+        #fitness = random.random() * 100
+        p.setFitness(fitness)
+        fitnesses.append(fitness)
+
+    return fitnesses
+
+def chebyshev(_population):
+    maxDiff = 0.0
+    compared = {}
+    for p in _population:
+        psum = 0
+
+        # image is the background color with no changes - weed out
+        numblack = count_nonblack_pil(p.image)
+        if numblack == 0:
+            p.setFitness(0.0)
+        else:
+            for p2 in _population:
+                if p != p2:
+                    id1 = "{0}:{1}".format(p._id, p2._id)
+                    id2 = "{0}:{1}".format(p2._id, p._id)
+                    keys = compared.keys()
+                    if not id1 in keys or not id2 in keys:
+                        hist1 = cv2.calcHist(np.asarray(p.image), [0,1,2], None, [8,8,8], [0,256,0,256,0,256])
+                        hist1 = cv2.normalize(hist1, hist1).flatten()
+                        hist2 = cv2.calcHist(np.asarray(p2.image), [0,1,2], None, [8,8,8], [0,256,0,256,0,256])
+                        hist2 = cv2.normalize(hist2, hist2).flatten()
+
+                        # chi_diff = chi2_dist(hist1, hist2)
+                        # de = dist.euclidean(hist1, hist2)
+                        # dm = dist.cityblock(hist1, hist2)
+                        diff = dist.chebyshev(hist1, hist2)
+
+                        # diff = rmsdiff(p.image, p2.image)
+
+                        if (diff > maxDiff):
+                            maxDiff = diff
+                        compared[id1] = True
+                        psum += diff
+            psum /= (len(_population) - 1)
+            p.setFitness(psum)
+
+    # actual fitness?
+    fitnesses = []
+    for p in _population:
+        # lenTechniques = len(set(p.grammar.split(',')))
+        try:
+            # fitness = (0.5 * (p.getFitness() / maxDiff)) + (
+            #     0.5 * (lenTechniques / maxUniques))
+            fitness = p.getFitness() / maxDiff
+        except ZeroDivisionError:
+            print(p._id, maxDiff)#, maxUniques)
             fitness = 0.0
         #fitness = random.random() * 100
         p.setFitness(fitness)

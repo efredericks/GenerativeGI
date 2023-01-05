@@ -23,12 +23,13 @@ from generative_object import GenerativeObject
 def evaluate_ind(g):#id, dim, grammar):
     return evol_utils.evaluate_individual(g)
     
-
+def getFitnesses(_pop):
+    return [[p_c, g_c, u_c, c_c] for p_c, g_c, u_c, c_c in zip(evol_utils.pairwiseComparison(_pop), evol_utils.uniqueGeneCount(_pop), evol_utils.numUniqueTechniques(_pop), evol_utils.chebyshev(_pop))]
 
 # TODO: Establish what the initial fitnesses are.
 # Initial Fitnesses: 
 # Fit_0: 
-creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0]))# -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0]))
+creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0, 1.0]))# -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0]))
 creator.create("Individual", GenerativeObject, fitness=creator.Fitness)
 
 if __name__ == '__main__': 
@@ -137,7 +138,8 @@ if __name__ == '__main__':
 
     # Calculate fitnesses once all the individuals have generated images.
     # print(type(pop))
-    fitnesses = [[p_c, g_c, u_c] for p_c, g_c, u_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop))]
+    fitnesses = getFitnesses(pop)
+    # fitnesses = [[p_c, g_c, u_c, c_c] for p_c, g_c, u_c, c_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop), evol_utils.chebyshev(pop))]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
@@ -190,7 +192,8 @@ if __name__ == '__main__':
         pop = toolbox.map(toolbox.evaluate, pop)
 
         # Calculate fitnesses once all the individuals have generated images.
-        fitnesses = [[p_c, g_c, u_c] for p_c, g_c, u_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop))]
+        fitnesses = getFitnesses(pop)
+        # fitnesses = [[p_c, g_c, u_c, c_c] for p_c, g_c, u_c, c_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop), evol_utils.chebyshev(pop))]
             
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
