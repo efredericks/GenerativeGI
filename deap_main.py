@@ -23,12 +23,13 @@ from generative_object import GenerativeObject
 def evaluate_ind(g):#id, dim, grammar):
     return evol_utils.evaluate_individual(g)
     
-
+def getFitnesses(_pop):
+    return [[p_c, g_c, u_c, c_c] for p_c, g_c, u_c, c_c in zip(evol_utils.pairwiseComparison(_pop), evol_utils.uniqueGeneCount(_pop), evol_utils.numUniqueTechniques(_pop), evol_utils.chebyshev(_pop))]
 
 # TODO: Establish what the initial fitnesses are.
 # Initial Fitnesses: 
 # Fit_0: 
-creator.create("Fitness", base.Fitness, weights=([1.0,]))# -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0]))
+creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0, 1.0]))# -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0]))
 creator.create("Individual", GenerativeObject, fitness=creator.Fitness)
 
 if __name__ == '__main__': 
@@ -67,12 +68,13 @@ if __name__ == '__main__':
     # Establish name of the output files and write appropriate headers.
     out_fit_file = "{}/{}/{}/{}_{}_fitnesses.dat".format(args.output_path,args.treatment,args.run_num,args.treatment,args.run_num)
     lex_log_file = "{}/{}/{}/{}_{}_lexicase_ordering_log.dat".format(args.output_path,args.treatment,args.run_num,args.treatment,args.run_num)
+    pop_log_file = "{}/{}/{}/{}_{}_population.dat".format(args.output_path,args.treatment,args.run_num,args.treatment,args.run_num)
     
     if os.path.exists(lex_log_file):
         # Remove the lexicase logging file.
         os.remove(lex_log_file)
 
-    # evol_utils.writeHeaders(out_fit_file, evol_utils.ExperimentSettings.num_objectives)
+    evol_utils.writeHeaders(out_fit_file, evol_utils.ExperimentSettings.num_objectives)
     resume_evolution = False
     log_interval = 100 # How many generations between logging genomes.
 
@@ -105,7 +107,7 @@ if __name__ == '__main__':
         toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=1)
     else:
         # Register the selection function.
-        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.95)
+        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.85)
 
     # Crossover and mutation probability
     cxpb, mutpb = 0.5, 0.4
@@ -122,9 +124,9 @@ if __name__ == '__main__':
     fitnesses = []
 
     # Multiprocessing component.
-    # cores = mpc.cpu_count()
-    # pool = mpc.Pool(processes=cores-2)
-    pool = mpc.Pool(processes=1)
+    cores = mpc.cpu_count()
+    pool = mpc.Pool(processes=cores-2)
+    # pool = mpc.Pool(processes=1)
     toolbox.register("map", pool.map)
 
     # Slice population if size is over 240.  (OSError on cluster)
@@ -135,10 +137,16 @@ if __name__ == '__main__':
     pop = toolbox.map(toolbox.evaluate, pop)
 
     # Calculate fitnesses once all the individuals have generated images.
-    fitnesses = evol_utils.pairwiseComparison(pop)
+    # print(type(pop))
+    fitnesses = getFitnesses(pop)
+    # fitnesses = [[p_c, g_c, u_c, c_c] for p_c, g_c, u_c, c_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop), evol_utils.chebyshev(pop))]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
+        
+    for i in range(len(pop)):
+        print(pop[i]._id, pop[i].fitness.values, pop[i].grammar)
+        pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
 
     # Only log fitnesses if we aren't resuming from a prior checkpoint.
     if not resume_evolution:
@@ -181,10 +189,11 @@ if __name__ == '__main__':
             toolbox.mutate(mutant)
             del mutant.fitness.values
 
-        images = toolbox.map(toolbox.evaluate, pop)
+        pop = toolbox.map(toolbox.evaluate, pop)
 
         # Calculate fitnesses once all the individuals have generated images.
-        fitnesses = evol_utils.pairwiseComparison(pop)
+        fitnesses = getFitnesses(pop)
+        # fitnesses = [[p_c, g_c, u_c, c_c] for p_c, g_c, u_c, c_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop), evol_utils.chebyshev(pop))]
             
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
@@ -211,8 +220,9 @@ if __name__ == '__main__':
     #if args.evol_type == 'lexicase':
     evol_utils.Logging.writeLexicaseOrdering(lex_log_file)
 
-     # Print out last generation
+    # Write out the last generation to a file.
+    evol_utils.Logging.writePopulationInformation(pop_log_file, pop)
     for i in range(len(pop)):
         print(pop[i]._id, pop[i].fitness.values, pop[i].grammar)
-        pop[i].image.save("./{0}/img-{1}.png".format(args.output_path, pop[i]._id))
+        pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
     

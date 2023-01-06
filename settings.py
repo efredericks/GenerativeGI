@@ -2,7 +2,10 @@ import tracery
 import numpy as np
 from colour_palettes import palettes
 
+# tbd: palettes in other techniques!
+
 DIM = (1000, 1000)
+BACKGROUND = 'black'
 
 # tracery grammar
 # leave a trailing colon after each technique for the parameter list as we're splitting on colon regardless
@@ -10,10 +13,10 @@ rules = {
     'ordered_pattern': ['#techniques#'],
     'techniques': ['#technique#', '#techniques#,#technique#'],
     'technique': [
-        'stippled:', 'wolfram-ca:',
+        'stippled:', 'wolfram-ca:#palette#',
         'flow-field:#flow-field-type#:#flow-field-zoom#',
         'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#',
-        'drunkardsWalk:', 'dither:',
+        'drunkardsWalk:#palette#', 'dither:#ditherType#',
         'flow-field-2:#palette#:#flow-field-2-type#:#flow-field-2-noisescale#:#flow-field-2-resolution#',
         'circle-packing:#palette#:#circle-packing-limit#'
     ],
@@ -36,6 +39,8 @@ rules = {
     # circle packing parameters
     'circle-packing-limit': [str(x) for x in range(10, 30)],
     # colour palettes
-    'palette': [x for x in palettes]
+    'palette': [x for x in palettes],
+    # dither parameters
+    'ditherType': ['grayscale', 'halftone', 'dither', 'primaryColors', 'simpleDither'],
 }
 grammar = tracery.Grammar(rules)
