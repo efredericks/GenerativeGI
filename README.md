@@ -2,29 +2,39 @@
 
 Genetic algorithm / novelty search for discovering generative artwork via evolving a grammar-based solution.
 
+## ASE-GI Results
+
+All of our results published in the paper are hosted on [Zenodo](https://zenodo.org/record/8170436).  This archive comprises all output images from each evolutionary run as well as the population data per-replicate.
+
 ## Usage
 
 I used Python 3.8, though it should work for most current versions of Python.
 
-1. Install required libraries: `python3 -m pip install -r requirements.txt`
+1. Install required libraries: 
 
-2. Run: `python3 main.py [args]`
+* `python3 -m pip install -r requirements.txt`
+
+Note, the following system dependency is also required:
+
+* tkinter (`sudo apt install python3-tk` on Debian-based systems).
+
+2. Run: `python3 deap_main.py [args]`
 
   * Arguments:
+
+      * `"--gens", type=int, default=100, help="Number of generations to run evolution for."`
+      * `"--pop_size", type=int, default=100, help="Population size for evolution."`
+      * `"--treatment", type=int, default=0, help="Run Number"`
+      * `"--run_num", type=int, default=0, help="Run Number"`
+      * `"--output_path", type=str, default="./", help="Output path."`
+      * `"--lexicase",action="store_true",help="Whether to do normal or Lexicase selection."`
+      * `"--shuffle", action="store_true", help="Shuffle the fitness indicies per selection event."`
+      * `"--tourn_size", type=int, default=4, help="What tournament size should we go with?"`
     
-     * Help: `--h`
-
-     * Number of generations: `--generations [int]`
-
-     * Population size: `--population size [int]`
-
-     * Crossover rate: `--crossover_rate [float: [0.0, 1.0]]`
-
-     * Mutation rate: `--mutation_rate [float: [0.0, 1.0]]`
 
 ## Grammar construction
 
-TBD
+Grammars follow the Tracery rules, starting with `ordered_pattern` and are defined in `settings.py`.
 
 ## Adding a new technique
 
@@ -66,6 +76,8 @@ def evaluate(g):
        circlePacking(g.image)
 ```
 
+If you want to add additional parameters check the other examples in the grammar - essentially you create a sub-production and reference that within your technique's declaration.
+
 ## Techniques
 
 This section outlines the implemented techniques, their parameters, and how to call them via the grammar.
@@ -79,25 +91,28 @@ This section outlines the implemented techniques, their parameters, and how to c
 
 #### Grammar Specification
 
-TBD
+Here we outline the specific techniques and their grammar representation.
 
 ### Dithering
 
-TBD
+Dithers an image using either 'simple' PIL dithering (i.e., grayscale only) or via grayscale / halftone / primary colors / Floyd-Steinberg dithering.
 
 #### Grammar Specification
 
-TBD
+* `'dither:#ditherType#'
+  * `'ditherType': ['grayscale', 'halftone', 'dither', 'primaryColors', 'simpleDither']`
 
 ### Drunkard's Walk
 
-TBD
+Performs our implementation of the Drunkards walk algorithm for allowing particles to walk across the canvas.
 
 #### Grammar Specification
 
-TBD
+* `'drunkardsWalk:#palette#'`
 
 ### Flow Field
+
+First implementation of a particle-based flow field.
 
 **Parameters**
 
@@ -111,9 +126,13 @@ TBD
 
 #### Grammar Specification
 
-TBD
+* `'flow-field:#flow-field-type#:#flow-field-zoom#'`
+  * `'flow-field-type': ['edgy', 'curves']`
+  * `'flow-field-zoom': [str(x) for x in np.arange(0.001, 0.5, 0.001)]`
 
 ### Flow Field v2
+
+Second implementation of the flow field algorithm 
 
 **Parameters**
 
@@ -126,9 +145,14 @@ TBD
 
 #### Grammar Specification
 
-TBD
+* `'flow-field-2:#palette#:#flow-field-2-type#:#flow-field-2-noisescale#:#flow-field-2-resolution#'`
+  * `'flow-field-2-type': ['edgy','curvy']`
+  * `'flow-field-2-noisescale': [str(x) for x in range(200, 600)]`
+  * `'flow-field-2-resolution': [str(x) for x in range(2, 5)]`
 
 ### Pixel Sort
+
+Pixel sorting algorithm c/o https://github.com/satyarth/pixelsort.
 
 **Parameters**
 
@@ -150,20 +174,52 @@ TBD
 
 #### Grammar Specification
 
-TBD
+* `'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#',`
+
+  * `'pixel-sort-angle': [str(x) for x in range(0, 360)],`
+  * `'pixel-sort-interval': ['random', 'edges', 'threshold', 'waves', 'none'],`
+  * `'pixel-sort-sorting': ['lightness', 'hue', 'saturation', 'intensity', 'minimum'],`
+  * `'pixel-sort-randomness': [str(x) for x in np.arange(0.0, 1.0, 0.05)],`
+  * `'pixel-sort-charlength': [str(x) for x in range(1, 30)],`
+  * `'pixel-sort-lowerthreshold': [str(x) for x in np.arange(0.0, 0.25, 0.01)],`
+  * `'pixel-sort-upperthreshold': [str(x) for x in np.arange(0.0, 1.0, 0.01)],`
 
 ### Stipple
 
-TBD
-
-#### Grammar Specification
-
-TBD
+Draws a series of small dots over the image for a texturing effect.  No parameters.
 
 ### Wolfram Cellular Automata
 
-TBD
+Executes a cellular automata algorithm, where the input cell rules are currently randomized between pure random selection and the Wolfram CA rules: https://p5js.org/examples/simulate-wolfram-ca.html.
 
 #### Grammar Specification
 
-TBD
+* `'wolfram-ca:#palette#'`
+
+### RGB Shift
+
+Separates out each color channel and then reapplies to the base image with a transparency and offset to provide a simple glitch effect.
+
+#### Grammar Specification:
+
+* `'rgb-shift:#alphaR#,#alphaG#,#alphaB#,#rXoff#,#rYoff#,#gXoff#,#gYoff#,#bXoff#,#bYoff#',`
+  * `'alphaR': [str(x) for x in np.arange(0.0, 1.0, 0.01)], `
+  * `'alphaG': [str(x) for x in np.arange(0.0, 1.0, 0.01)],`
+  * `'alphaB': [str(x) for x in  np.arange(0.0, 1.0, 0.01)],`
+  * `'rXoff': [str(x) for x in range(-10,10)],`
+  * `'rYoff': [str(x) for x in range(-10,10)],`
+  * `'gXoff': [str(x) for x in range(-10,10)],`
+  * `'gYoff': [str(x) for x in range(-10,10)],`
+  * `'bXoff': [str(x) for x in range(-10,10)],`
+  * `'bYoff': [str(x) for x in range(-10,10)],`
+
+### Noisemap
+
+Overlays a noise map (based on Simplex noise) onto the existing canvas.
+
+#### Grammar Specification
+
+  * `'noise-map:#palette#,#noiseX#,#noiseY#,#noiseAlpha#',`
+    *  `'noiseX': [str(x) for x in np.arange(0.001, 0.25)],`
+    *  `'noiseY': [str(x) for x in np.arange(0.001, 0.25)],`
+    *  `'noiseAlpha': [str(x) for x in np.arange(0.0, 1.0)],`

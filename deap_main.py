@@ -1,5 +1,5 @@
 """
-    A pytorch NN plus flexible morphology evolvable quadruped.
+Entry point for the DEAP implementation of GenerativeGI
 """
 
 import argparse
@@ -16,20 +16,28 @@ from deap import base
 from deap import creator
 from deap import tools
 
+from PIL import Image, ImageTk
+import tkinter as tk
+
 import evol_utils
 from generative_object import GenerativeObject
 
+ids_to_save = []
+
+# Image selection for tkinter
+def selectImage(idx):
+    global ids_to_save
+    ids_to_save.append(idx)
+
 # Accepts a GenerativeObject and iterates over its grammar, performing the technique specified
-def evaluate_ind(g):#id, dim, grammar):
+def evaluate_ind(g):
     return evol_utils.evaluate_individual(g)
     
 def getFitnesses(_pop):
-    return [[p_c, g_c, u_c, c_c] for p_c, g_c, u_c, c_c in zip(evol_utils.pairwiseComparison(_pop), evol_utils.uniqueGeneCount(_pop), evol_utils.numUniqueTechniques(_pop), evol_utils.chebyshev(_pop))]
+    return [[p_c, g_c, u_c, c_c, neg_sp] for p_c, g_c, u_c, c_c, neg_sp in zip(evol_utils.pairwiseComparison(_pop), evol_utils.uniqueGeneCount(_pop), evol_utils.numUniqueTechniques(_pop), evol_utils.chebyshev(_pop), evol_utils.score_negative_space(_pop))]
 
-# TODO: Establish what the initial fitnesses are.
 # Initial Fitnesses: 
-# Fit_0: 
-creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0, 1.0]))# -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0]))
+creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0, 1.0, -1.0]))
 creator.create("Individual", GenerativeObject, fitness=creator.Fitness)
 
 if __name__ == '__main__': 
@@ -45,6 +53,9 @@ if __name__ == '__main__':
     parser.add_argument("--lexicase",action="store_true",help="Whether to do normal or Lexicase selection.")
     parser.add_argument("--shuffle", action="store_true", help="Shuffle the fitness indicies per selection event.")
     parser.add_argument("--tourn_size", type=int, default=4, help="What tournament size should we go with?")
+    parser.add_argument("--human_interaction", action="store_true", help="Activate GUI interaction for user involvement.")
+    parser.add_argument("--human_interaction_gens", type=int, default=5, help="Number of generations to solicit user feedback if human_interaction flag is true")
+    parser.add_argument("--clear_canvas", action="store_true", help="To clear or not clear canvas during evolutionary operations.")
     args = parser.parse_args()
 
     # Create output directories if they don't already exist.
@@ -60,10 +71,13 @@ if __name__ == '__main__':
     with open("{}/{}/{}/commandline_args.txt".format(args.output_path,args.treatment,args.run_num), 'w') as f:
         json.dump(args.__dict__, f, indent=2)
 
-    evol_utils.args = args
 
     # Seed only the evolutionary runs.
     random.seed(args.run_num)
+    shared_rng = random.Random(args.run_num)
+
+    evol_utils.args = args
+    evol_utils.rng = shared_rng
     
     # Establish name of the output files and write appropriate headers.
     out_fit_file = "{}/{}/{}/{}_{}_fitnesses.dat".format(args.output_path,args.treatment,args.run_num,args.treatment,args.run_num)
@@ -77,13 +91,6 @@ if __name__ == '__main__':
     evol_utils.writeHeaders(out_fit_file, evol_utils.ExperimentSettings.num_objectives)
     resume_evolution = False
     log_interval = 100 # How many generations between logging genomes.
-
-    # # TODO: Establish what the initial fitnesses are.
-    # # Initial Fitnesses: 
-    # # Fit_0: 
-    # creator.create("Fitness", base.Fitness, weights=([-1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0]))
-
-    # creator.create("Individual", GenerativeObject, fitness=creator.Fitness)
 
     # Create the toolbox for setting up DEAP functionality.
     toolbox = base.Toolbox()
@@ -104,7 +111,7 @@ if __name__ == '__main__':
 
     if not args.lexicase:
         # Register the selection function.
-        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=1)
+        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=False, num_objectives=1)
     else:
         # Register the selection function.
         toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.85)
@@ -118,6 +125,7 @@ if __name__ == '__main__':
     # Request new id's for the population.
     for ind in pop:
         ind.get_new_id()
+        ind.setRNG(shared_rng)
 
     # If we have a prior population, use those genomes
     # otherwise run generation 0.
@@ -139,7 +147,6 @@ if __name__ == '__main__':
     # Calculate fitnesses once all the individuals have generated images.
     # print(type(pop))
     fitnesses = getFitnesses(pop)
-    # fitnesses = [[p_c, g_c, u_c, c_c] for p_c, g_c, u_c, c_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop), evol_utils.chebyshev(pop))]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
@@ -153,7 +160,7 @@ if __name__ == '__main__':
         # Log the progress of the population. (For Generation 0)
         evol_utils.writeGeneration(out_fit_file,0,pop)
 
-    gen_reached = 0
+    gen_reached = 1
     for g in range(gen_reached,args.gens):
         glob_cur_gen = g
         if args.lexicase:
@@ -166,7 +173,8 @@ if __name__ == '__main__':
 
         # Select the rest of the children either with crossover or cloning.
         for i in range(args.pop_size):
-            if random.random() < cxpb:
+            # if random.random() < cxpb:
+            if shared_rng.random() < cxpb:
                 # Crossover
                 par_1 = toolbox.select(pop,g)
                 par_2 = toolbox.select(pop,g)
@@ -184,6 +192,7 @@ if __name__ == '__main__':
         # Request new id's for the population.
         for ind in pop:
             ind.get_new_id()
+            ind.setRNG(shared_rng)
 
         for mutant in pop:
             toolbox.mutate(mutant)
@@ -193,8 +202,6 @@ if __name__ == '__main__':
 
         # Calculate fitnesses once all the individuals have generated images.
         fitnesses = getFitnesses(pop)
-        # fitnesses = [[p_c, g_c, u_c, c_c] for p_c, g_c, u_c, c_c in zip(evol_utils.pairwiseComparison(pop), evol_utils.uniqueGeneCount(pop), evol_utils.numUniqueTechniques(pop), evol_utils.chebyshev(pop))]
-            
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
 
@@ -206,6 +213,71 @@ if __name__ == '__main__':
         
         # Log the progress of the population.
         evol_utils.writeGeneration(out_fit_file,g,pop)
+
+        # Popup a tkinter gui window and have the user select the 5 'best' images
+        if args.human_interaction and g > 0 and ((g % args.human_interaction_gens) == 0):
+            root = tk.Tk()
+            root.geometry("1000x1000")
+            frame = tk.Frame(root)
+            root.rowconfigure(0,weight=1)
+            root.columnconfigure(0,weight=1)
+            frame.grid(row=0,column=0)
+
+            num_imgs_per_row_col = 4
+            if args.pop_size > 20:
+                num_imgs_per_row_col = 8
+            img_width = 1000 // num_imgs_per_row_col
+
+
+            img_info = []
+            for p in pop:
+                _img = p.image.resize((img_width, img_width), Image.ANTIALIAS)
+                img_info.append([ImageTk.PhotoImage(_img), p._id])
+
+            x = 0
+            y = 0
+            half_pop = args.pop_size//2
+            for img in img_info:
+                imgBtn = tk.Button(frame, image=img[0], command=lambda idx=img[1]:selectImage(idx))
+                # imgBtn.pack()
+                imgBtn.grid(column=x, row=y)
+                x += 1
+                if x > num_imgs_per_row_col-1:
+                    x = 0
+                    y += 1
+
+            frame.columnconfigure(tuple(range(half_pop)),weight=1)
+            frame.rowconfigure(tuple(range(half_pop)),weight=1)
+
+            root.title("Generation {0}".format(g))
+            root.mainloop()
+
+            if len(ids_to_save) > 0:
+                pop = [p for p in pop if p._id in ids_to_save]
+            else: # not liked - remove all
+                print("ERROR - FIXME")
+                # pop = toolbox.population(n=args.pop_size)
+                # for ind in pop:
+                #     ind.get_new_id()
+
+            # pop = [toolbox.clone(random.choice(pop)) for _ in range(args.pop_size-len(pop))]
+            pop = [toolbox.clone(shared_rng.choice(pop)) for _ in range(args.pop_size-len(pop))]
+            # for _ in range(args.pop_size - len(pop)):
+            #     mutant = toolbox.clone(random.choice(pop))
+            for mutant in pop:
+                if mutant._id not in ids_to_save:
+                    toolbox.mutate(mutant)
+                    del mutant.fitness.values
+
+            # Request new id's for the population.
+            for ind in pop:
+                ind.get_new_id()
+                ind.setRNG(shared_rng)
+
+            ids_to_save = []
+
+
+
 
         # Log the population at 100 generation intervals.
         #if g % log_interval == 0:
@@ -225,4 +297,3 @@ if __name__ == '__main__':
     for i in range(len(pop)):
         print(pop[i]._id, pop[i].fitness.values, pop[i].grammar)
         pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
-    

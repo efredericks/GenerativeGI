@@ -8,10 +8,8 @@ import random
 
 import os
 
-from PIL import Image, ImageDraw, ImageChops
-import opensimplex
+from PIL import Image
 import tracery
-from generative_object import GenerativeObject
 from techniques import *
 import cv2
 from scipy.spatial import distance as dist
@@ -19,6 +17,7 @@ from scipy.spatial import distance as dist
 from settings import *
 
 args = ""
+rng = None
 lexicase_ordering = []
 glob_fit_indicies = []
 
@@ -32,36 +31,17 @@ class ExperimentSettings(object):
     num_objectives = num_environments * 7  # 4 ways to measure fitness per environment.
 
     args = ""
+    rng = None
 
     treatments = [
         "baseline",  #0
     ]
-    num_objectives = 3
+    num_objectives = 5
 
     rules = rules
-    # rules = {
-    #   'ordered_pattern': ['#techniques#'],
-    #   'techniques': ['#technique#', '#techniques#,#technique#'],
-    #   'technique': ['stippled:',
-    #                 'flow-field:#flow-field-type#:#flow-field-zoom#',
-    #                 'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#',
-    #                 'dither:'],
-    #   # pixel sort parameters
-    #   'pixel-sort-angle': [str(x) for x in range(0,360)],
-    #   'pixel-sort-interval': ['random', 'edges', 'threshold', 'waves', 'none'],
-    #   'pixel-sort-sorting': ['lightness', 'hue', 'saturation', 'intensity', 'minimum'],
-    #   'pixel-sort-randomness': [str(x) for x in np.arange(0.0, 1.0, 0.05)],
-    #   'pixel-sort-charlength': [str(x) for x in range(1,30)],
-    #   'pixel-sort-lowerthreshold': [str(x) for x in np.arange(0.0, 0.25, 0.01)],
-    #   'pixel-sort-upperthreshold': [str(x) for x in np.arange(0.0, 1.0, 0.01)],
-    #   # flow field parameters
-    #   'flow-field-type': ['edgy', 'curves'],
-    #   'flow-field-zoom': [str(x) for x in np.arange(0.001, 0.5, 0.001)],
-    # }
-
     grammar = tracery.Grammar(rules)
 
-    DIM = DIM  #(10,10)
+    DIM = DIM 
 
 
 ##########################################################################################
@@ -153,6 +133,7 @@ def writeGeneration(filename, generation, individuals):
 # Non-class methods specific to the problem at hand.
 def initIndividual(ind_class):
     return ind_class(ExperimentSettings.DIM,
+                     ExperimentSettings.rng,
                      ExperimentSettings.grammar.flatten("#ordered_pattern#"))
 
 
@@ -165,36 +146,16 @@ def evaluate_individual(g):
     Returns:
         image an individual generates
     """
-    # print("Evaluating {0}:{1}".format(g._id, g.grammar))
-    # for technique in g.grammar.split(','):
-    #     _technique = technique.split(":") # split off parameters
-    #     c = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-    #     if _technique[0] == 'flow-field':
-    #         flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1], _technique[2], _technique[2])
-    #     elif _technique[0] == 'stippled':
-    #         stippledBG(g.image, c, g.dim)
-    #     elif _technique[0] == 'pixel-sort':
-    #         # 1: angle
-    #         # 2: interval
-    #         # 3: sorting algorithm
-    #         # 4: randomness
-    #         # 5: character length
-    #         # 6: lower threshold
-    #         # 7: upper threshold
-    #         g.image = pixelSort(g.image, _technique[1:])
-
-    #     elif _technique[0] == 'dither':
-    #         g.image = simpleDither(g.image)
     for technique in g.grammar.split(','):
         _technique = technique.split(":")  # split off parameters
-        c = (random.randint(0,
-                            255), random.randint(0,
-                                                 255), random.randint(0, 255))
+        c = (g.rng.randint(0,
+                            255), g.rng.randint(0,
+                                                 255), g.rng.randint(0, 255))
         if _technique[0] == 'flow-field':
-            flowField(g.image, 1, g.dim[1], g.dim[0], c, _technique[1],
+            flowField(g.image, g.rng, 1, g.dim[1], g.dim[0], c, _technique[1],
                       _technique[2], _technique[2])
         elif _technique[0] == 'stippled':
-            stippledBG(g.image, c, g.dim)
+            stippledBG(g.image, g.rng, c, g.dim)
         elif _technique[0] == 'pixel-sort':
             # 1: angle
             # 2: interval
@@ -203,29 +164,43 @@ def evaluate_individual(g):
             # 5: character length
             # 6: lower threshold
             # 7: upper threshold
-            g.image = pixelSort(g.image, _technique[1:])
+            g.image = pixelSort(g.image, g.rng, _technique[1:])
 
         elif _technique[0] == 'dither':
             if _technique[1] == 'grayscale':
-                g.image = convert_grayscale(g.image)
+                g.image = convert_grayscale(g.image, rng)
             elif _technique[1] == 'halftone':
-                g.image = convert_halftoning(g.image)
+                g.image = convert_halftoning(g.image, rng)
             elif _technique[1] == 'dither':
-                g.image = convert_dithering(g.image)
+                g.image = convert_dithering(g.image, rng)
             elif _technique[1] == 'primaryColors':
-                g.image = convert_primary(g.image)
+                g.image = convert_primary(g.image, rng)
             else:
-                g.image = simpleDither(g.image)
+                g.image = simpleDither(g.image, rng)
         elif _technique[0] == 'wolfram-ca':
-            WolframCA(g.image, _technique[1])
+            WolframCA(g.image, rng, _technique[1])
         elif _technique[0] == 'drunkardsWalk':
-            drunkardsWalk(g.image, palette=_technique[1])
+            drunkardsWalk(g.image, rng, palette=_technique[1])
         elif _technique[0] == 'flow-field-2':
-            flowField2(g.image, _technique[1], _technique[2], _technique[3],
+            flowField2(g.image, rng, _technique[1], _technique[2], _technique[3],
                        _technique[4])
         elif _technique[0] == 'circle-packing':
-            circlePacking(g.image, _technique[1], _technique[2])
-
+            circlePacking(g.image, rng, _technique[1], _technique[2])
+        elif _technique[0] == 'rgb-shift':
+            g.image = RGBShift(g.image, rng, float(_technique[1]), float(_technique[2]), float(_technique[3]), float(_technique[4]), float(_technique[5]), float(_technique[6]), float(_technique[7]), float(_technique[8]), float(_technique[9]))
+        elif _technique[0] == 'noise-map':
+            g.image = noiseMap(g.image, rng, _technique[1], float(_technique[2]), float(_technique[3]), float(_technique[4]))
+        elif _technique[0] == 'oil-painting-filter':
+            g.image = openCV_oilpainting(g.image, rng, int(_technique[1]))
+        elif _technique[0] == 'watercolor-filter':
+            g.image = openCV_watercolor(g.image, rng, int(_technique[1]), float(_technique[2]))
+        elif _technique[0] == 'pencil-filter':
+            g.image = openCV_pencilSketch(g.image, rng, int(_technique[1]), float(_technique[2]), float(_technique[3]), _technique[4])
+        elif _technique[0] == 'walkers':
+            walkers(g.image, rng, palette=_technique[1], num_walkers=int(_technique[2]), walk_type=_technique[3])
+        elif _technique[0] == 'basic_trig':
+            basic_trig(g.image, rng, palette=_technique[1], num_to_draw=int(_technique[2]), drawtype=_technique[3])
+        
     return g
 
 
@@ -266,15 +241,11 @@ def pairwiseComparison(_population):
     # actual fitness?
     fitnesses = []
     for p in _population:
-        # lenTechniques = len(set(p.grammar.split(',')))
         try:
-            # fitness = (0.5 * (p.getFitness() / maxDiff)) + (
-            #     0.5 * (lenTechniques / maxUniques))
             fitness = p.getFitness() / maxDiff
         except ZeroDivisionError:
             print(p._id, maxDiff)#, maxUniques)
             fitness = 0.0
-        #fitness = random.random() * 100
         p.setFitness(fitness)
         fitnesses.append(fitness)
 
@@ -302,11 +273,7 @@ def chebyshev(_population):
                         hist2 = cv2.calcHist(np.asarray(p2.image), [0,1,2], None, [8,8,8], [0,256,0,256,0,256])
                         hist2 = cv2.normalize(hist2, hist2).flatten()
 
-                        # chi_diff = chi2_dist(hist1, hist2)
-                        # de = dist.euclidean(hist1, hist2)
-                        # dm = dist.cityblock(hist1, hist2)
                         diff = dist.chebyshev(hist1, hist2)
-
                         # diff = rmsdiff(p.image, p2.image)
 
                         if (diff > maxDiff):
@@ -316,18 +283,14 @@ def chebyshev(_population):
             psum /= (len(_population) - 1)
             p.setFitness(psum)
 
-    # actual fitness?
+    # aggregate fitness
     fitnesses = []
     for p in _population:
-        # lenTechniques = len(set(p.grammar.split(',')))
         try:
-            # fitness = (0.5 * (p.getFitness() / maxDiff)) + (
-            #     0.5 * (lenTechniques / maxUniques))
             fitness = p.getFitness() / maxDiff
         except ZeroDivisionError:
             print(p._id, maxDiff)#, maxUniques)
             fitness = 0.0
-        #fitness = random.random() * 100
         p.setFitness(fitness)
         fitnesses.append(fitness)
 
@@ -374,14 +337,123 @@ def numUniqueTechniques(_population):
         fitnesses.append(len(set(techniques)))
     return fitnesses
 
+# Source: https://stackoverflow.com/a/52879133
+def score_triadic_color_alignment(_population):
+  """ Score each individual based on their triadic color palette.  Find the dominant color in an image 
+      and then identify the three complimentary colors.  Returned score will be how closely the three 
+      primary colors in the image align with a triadic color palette.  
+  """
+  fitnesses = []
+  
+  for p in _population:
+      
+    # Resize the image if we want to save time.
+    #Resizing parameters
+    width, height = 150, 150
+    image = p.image.copy()
+    image.thumbnail((width, height), resample=0)
+    
+    # Good explanation of how HSV works to find complimentary colors.
+    # https://stackoverflow.com/a/69880467
+    image.convert('HSV')
+    
+    #image = image.resize((width, height), resample = 0)
+    #Get colors from image object
+    pixels = image.getcolors(width * height)
+    #Sort them by count number(first element of tuple)
+    sorted_pixels = sorted(pixels, key=lambda t: t[0])
+    
+    # Get the most frequent colors
+    # Filter out black if it is the dominant color since our background is black.
+    top_colors = sorted_pixels[-4:]
+    if top_colors[-1][1] == (0,0,0,255):
+        top_colors = top_colors[:-1]
+    else:
+        top_colors = top_colors[-2:]
+        
+    # Sort the colors by hue (ascending).
+    top_colors = sorted(top_colors, key=lambda x: x[1][0])
+    
+    # Assess how closely the three colors hue align with a 60 degree separation.
+    # This would be a difference of 85 in the HSV hue value between each color.
+    if len(top_colors) > 2:
+        avg_distance = sum([math.fabs(top_colors[i][1][0] - top_colors[(i+1)%3][1][0]) if i != 2 else math.fabs(255-top_colors[i][1][0] + top_colors[(i+1)%3][1][0]) for i in range(3)])/3
+    else:
+        avg_distance = 255
+    
+    fitnesses.append(math.fabs(255/3 - avg_distance))
+
+  return fitnesses
+
+# Source: https://stackoverflow.com/a/52879133
+def hsv_color_list(image):
+  """ Get the list of colors present in an image object by HSV value.  
+  """
+  # Resize the image if we want to save time.
+  #Resizing parameters
+  width, height = image.width, image.height
+  image = image.copy()
+  image.thumbnail((width, height), resample=0)
+  
+  # Good explanation of how HSV works to find complimentary colors.
+  # https://stackoverflow.com/a/69880467
+  image.convert('HSV')
+  
+  #image = image.resize((width, height), resample = 0)
+  #Get colors from image object
+  pixels = image.getcolors(width * height)
+  #Sort them by count number(first element of tuple)
+  sorted_pixels = sorted(pixels, key=lambda t: t[0])
+  
+  for color in sorted_pixels:
+    print(color)
+    
+  # Print the total number of pixels.
+  print(sum([color[0] for color in sorted_pixels]))
+  return sorted_pixels
+  
+def score_negative_space(_population, target_percent=.7, primary_black=True):
+  """ Score each individual based on their negative space compared to a target percentage.  
+    Assess how closely the provided image matches the target percentage for negative space. 
+  
+  Args:
+    _population: list of individuals to score
+    target_percent: target percentage of negative space in the image
+    primary_black: boolean indicating whether the primary color should be black or the top color in the image.
+  """
+  fitnesses = []
+  
+  for p in _population:
+    color_distribution = hsv_color_list(p.image)
+  
+    total_pixels = sum([color[0] for color in color_distribution])
+  
+    negative_space_pixels = 0
+    if primary_black:
+        # The primary color is black, so the negative space is whatever the distribution of black is.
+        for color in color_distribution:
+            if color[1] == (0,0,0,255):
+                negative_space_pixels = color[0]
+                break
+            else:
+                # The primary color is not black, so the negative space is whatever the distribution of the top color is.
+                negative_space_pixels = color[0]
+    
+    negative_space_percent = negative_space_pixels / total_pixels
+  
+    fitnesses.append(math.fabs(target_percent - negative_space_percent))
+
+  return fitnesses
 
 # Perform single-point crossover
 def singlePointCrossover(ind1, ind2):
     # children
     c1 = copy.deepcopy(ind1)
 
-    # c1.isEvaluated = False
-    # c1.id += "_c_{0}1_g{1}".format(j,gen)
+    # clear the canvas if the command line parameter is set
+    if args.clear_canvas:
+        c1.image = Image.new("RGBA", DIM, "black")
+        c1.isEvaluated = False
 
     split_grammar1 = ind1.grammar.split(",")
     split_grammar2 = ind1.grammar.split(",")
@@ -389,8 +461,8 @@ def singlePointCrossover(ind1, ind2):
     if len(split_grammar1) > 1 and len(split_grammar2) > 1:
         # crossover for variable length
         # pick an index each and flop
-        xover_idx1 = random.randint(1, len(split_grammar1) - 1)
-        xover_idx2 = random.randint(1, len(split_grammar2) - 1)
+        xover_idx1 = ind1.rng.randint(1, len(split_grammar1) - 1)
+        xover_idx2 = ind1.rng.randint(1, len(split_grammar2) - 1)
 
         new_grammar1 = []
         # up to indices
@@ -406,11 +478,11 @@ def singlePointCrossover(ind1, ind2):
 
         if len(split_grammar1) == 1:
             new_grammar1 = copy.deepcopy(split_grammar2)
-            new_grammar1.insert(random.randint(0, len(split_grammar2)),
+            new_grammar1.insert(ind1.rng.randint(0, len(split_grammar2)),
                                 split_grammar1[0])
         else:
             new_grammar1 = copy.deepcopy(split_grammar1)
-            new_grammar1.insert(random.randint(0, len(split_grammar1)),
+            new_grammar1.insert(ind1.rng.randint(0, len(split_grammar1)),
                                 split_grammar2[0])
 
     c1.grammar = ",".join(new_grammar1)
@@ -420,29 +492,31 @@ def singlePointCrossover(ind1, ind2):
 # And single-point mutation
 def singlePointMutation(ind):
     mutator = copy.deepcopy(ind)
-    # mutator.id += "_m_{0}_g{1}".format(j,gen)
-    #mutator.image = Image.new("RGBA", DIM, "black")
-    # leaving the 'old' image makes it look neater imo...
-    # mutator.isEvaluated = False
+
+    # clear the canvas if the command line parameter is set
+    if args.clear_canvas:
+        mutator.image = Image.new("RGBA", DIM, "black")
+        mutator.isEvaluated = False
 
     # Change a technique.
-    if random.random() < 0.25:
+    # if random.random() < 0.25:
+    if ind.rng.random() < 0.25:
         split_grammar = mutator.grammar.split(",")
-        mut_idx = random.randint(0, len(split_grammar) - 1)
+        mut_idx = ind.rng.randint(0, len(split_grammar) - 1)
 
         # either replace with a single technique or the possibility
         # of recursive techniques
         flattener = "#technique#"
-        if random.random() < 0.5:
+        if ind.rng.random() < 0.5:
             flattener = "#techniques#"
         local_grammar = ExperimentSettings.grammar.flatten(flattener)
 
         split_grammar[mut_idx] = local_grammar
         mutator.grammar = ",".join(split_grammar)
-    elif random.random() < 0.9:
+    elif ind.rng.random() < 0.9:
         # Mutate an individual technique.
         split_grammar = mutator.grammar.split(",")
-        mut_idx = random.randint(0, len(split_grammar) - 1)
+        mut_idx = ind.rng.randint(0, len(split_grammar) - 1)
         #print("\tMutation Attempt:",split_grammar[mut_idx])
         gene = split_grammar[mut_idx].split(":")
         technique = gene[0]
@@ -450,40 +524,68 @@ def singlePointMutation(ind):
         # these need to become embedded within the technique itself as a
         # class
         if technique == "pixel-sort":
-            gene[1] = str(random.randint(0,
+            gene[1] = str(ind.rng.randint(0,
                                          359))  # Mutate the angle of the sort.
 
             # interval function
-            gene[2] = random.choice(
+            gene[2] = ind.rng.choice(
                 ['random', 'edges', 'threshold', 'waves', 'none'])
             # sorting function
-            gene[3] = random.choice(
+            gene[3] = ind.rng.choice(
                 ['lightness', 'hue', 'saturation', 'intensity', 'minimum'])
             # randomness val
-            gene[4] = str(round(random.uniform(0.0, 1.0), 2))
+            gene[4] = str(round(ind.rng.uniform(0.0, 1.0), 2))
             # lower threshold
-            gene[5] = str(round(random.uniform(0.0, 0.25), 2))
+            gene[5] = str(round(ind.rng.uniform(0.0, 0.25), 2))
             # upper threshold
-            gene[6] = str(round(random.uniform(0.0, 1.0), 2))
+            gene[6] = str(round(ind.rng.uniform(0.0, 1.0), 2))
 
         elif technique == "flow-field":
-            # gene[1] = "edgy" if gene[1] == "curves" else "curves"
-            gene[1] = random.choice(["edgy", "curves"])
-            # gene[2] = str(0.001 + random.random()*0.5)
-            gene[2] = str(round(random.uniform(0.001, 0.5), 3))
+            gene[1] = ind.rng.choice(["edgy", "curves"])
+            gene[2] = str(round(ind.rng.uniform(0.001, 0.5), 3))
         elif technique == "flow-field-2":
-            gene[1] = random.choice(palettes)
-            gene[2] = random.choice(["edgy", "curvy"])
-            gene[3] = str(random.randint(200, 600))
-            gene[4] = str(round(random.uniform(2, 5), 2))
-            # gene[2] = "edgy" if gene[1] == "curves" else "curves"
-            # gene[3] = str(random.randint(200,600))
-            # gene[4] = str(random.randint(2,5))
+            gene[1] = ind.rng.choice(palettes)
+            gene[2] = ind.rng.choice(["edgy", "curvy"])
+            gene[3] = str(ind.rng.randint(200, 600))
+            gene[4] = str(round(ind.rng.uniform(2, 5), 2))
         elif technique == "circle-packing":
-            gene[1] = random.choice(palettes)
-            gene[2] = str(random.randint(10, 30))
+            gene[1] = ind.rng.choice(palettes)
+            gene[2] = str(ind.rng.randint(10, 30))
+        elif technique == "rgb-shift":
+            gene[1] = str(round(ind.rng.uniform(0.0, 1.0), 2))
+            gene[2] = str(round(ind.rng.uniform(0.0, 1.0), 2))
+            gene[3] = str(round(ind.rng.uniform(0.0, 1.0), 2))
+            gene[4] = str(ind.rng.randint(-5,5))
+            gene[5] = str(ind.rng.randint(-5,5))
+            gene[6] = str(ind.rng.randint(-5,5))
+            gene[7] = str(ind.rng.randint(-5,5))
+            gene[8] = str(ind.rng.randint(-5,5))
+            gene[9] = str(ind.rng.randint(-5,5))
+        elif technique == "noise-map":
+            gene[1] = ind.rng.choice(palettes)
+            gene[2] = str(round(ind.rng.uniform(0.001, 0.25), 3))
+            gene[3] = str(round(ind.rng.uniform(0.001, 0.25), 3))
+            gene[4] = str(round(ind.rng.uniform(0.0, 1.0), 2))
+        elif technique == "oil-painting":
+            gene[1] = str(ind.rng.randint(1,64))
+        elif technique == "watercolor-filter":
+            gene[1] = str(ind.rng.randint(1, 20))
+            gene[2] = str(round(ind.rng.uniform(0.0, 0.5), 2))
+        elif technique == "pencil-filter":
+            gene[1] = str(ind.rng.randint(1, 20))
+            gene[2] = str(round(ind.rng.uniform(0.0, 0.5), 2))
+            gene[3] = str(round(ind.rng.uniform(0.0, 0.05), 3))
+            gene[4] = ind.rng.choice(["on", "off"])
+        elif technique == "walkers":
+            gene[1] = ind.rng.choice(palettes)
+            gene[2] = str(ind.rng.randint(10, 100))
+            gene[3] = ind.rng.choice(['ordered', 'random', 'rule'])
+        elif technique == "basic-trig":
+            gene[1] = ind.rng.choice(palettes)
+            gene[2] = str(ind.rng.randint(1, 100))
+            gene[3] = ind.rng.choice(['circle', 'rect'])
 
-        # no params here
+        # no params here - placeholders if we augment
         # elif technique == "stippled":
         #     pass
         # elif technique == "wolfram-ca":
@@ -498,7 +600,7 @@ def singlePointMutation(ind):
     else:
         # Shuffle the order of techniques
         split_grammar = mutator.grammar.split(",")
-        random.shuffle(split_grammar)
+        ind.rng.shuffle(split_grammar)
         mutator.grammar = ",".join(split_grammar)
 
     return mutator
@@ -518,10 +620,11 @@ def roulette_selection(objs, obj_wts):
         sel_objs = [list(a) for a in zip(tmp_objs, tmp_wts)]
 
         # Shuffle the objectives
-        random.shuffle(sel_objs)
+        objs[0].rng.shuffle(sel_objs)
 
         # Generate a random number between 0 and 1.
-        ran_num = random.random()
+        # ran_num = random.random()
+        ran_num = objs[0].rng.random()
 
         # Iterate through the objectives until we select the one we want.
         for j in range(len(sel_objs)):
@@ -586,6 +689,8 @@ def epsilon_lexicase_selection(population,
     """
     global glob_fit_indicies
 
+    rng = population[0].rng
+
     # Get the fit indicies from the global fit indicies.
     fit_indicies = glob_fit_indicies if not shuffle else [
         i for i in range(len(population[0].fitness.weights))
@@ -601,17 +706,17 @@ def epsilon_lexicase_selection(population,
         # at the forefront.
         if not prim_shuffle:
             fit_indicies = fit_indicies[1:]
-            random.shuffle(fit_indicies)
+            rng.shuffle(fit_indicies)
             fit_indicies = [0] + fit_indicies
         else:
-            random.shuffle(fit_indicies)
+            rng.shuffle(fit_indicies)
 
     # Limit the number of objectives as directed.
     if num_objectives != 0:
         fit_indicies = fit_indicies[:num_objectives]
 
     # Sample the tournsize individuals from the population for the comparison
-    sel_inds = random.sample(population, tournsize)
+    sel_inds = rng.sample(population, tournsize)
 
     tie = True
 
@@ -663,7 +768,7 @@ def epsilon_lexicase_selection(population,
     # If tie is True, we haven't selected an individual as we've reached a tie state.
     # Select randomly from the remaining individuals in that case.
     if tie:
-        selected_individual = random.choice(sel_inds)
+        selected_individual = rng.choice(sel_inds)
         Logging.lexicase_information.append([
             generation, -1, -1, [ind._id for ind in sel_inds],
             selected_individual._id
@@ -691,6 +796,6 @@ def shuffle_fit_indicies(individual, excl_indicies=[]):
     # Remove excluded indicies
     fit_indicies = [i for i in fit_indicies if i not in excl_indicies]
 
-    random.shuffle(fit_indicies)
+    individual.rng.shuffle(fit_indicies)
 
     glob_fit_indicies = fit_indicies
