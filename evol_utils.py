@@ -541,13 +541,13 @@ def singlePointCrossover(ind1, ind2):
         c1.isEvaluated = False
 
     split_grammar1 = ind1.grammar.split(",")
-    split_grammar2 = ind1.grammar.split(",")
+    split_grammar2 = ind2.grammar.split(",")
 
     if len(split_grammar1) > 1 and len(split_grammar2) > 1:
         # crossover for variable length
         # pick an index each and flop
         xover_idx1 = ind1.rng.randint(1, len(split_grammar1) - 1)
-        xover_idx2 = ind1.rng.randint(1, len(split_grammar2) - 1)
+        xover_idx2 = ind2.rng.randint(1, len(split_grammar2) - 1)
 
         new_grammar1 = []
         # up to indices
