@@ -956,7 +956,10 @@ def mondrian_rectangle(img, palette, x, y, rect_len, rect_ht, rect_fill, line_ov
     rect_ht = int(rect_ht)
     rect_fill = int(rect_fill)
     line_overdraw = int(line_overdraw)
-    
+   
+    # get list of hex values
+    palette = getPaletteValues(palette)
+ 
     draw = ImageDraw.Draw(img)
     draw.rectangle(xy=(x, y, x + rect_len, y + rect_ht),
                          fill=palette[rect_fill%len(palette)])
