@@ -949,6 +949,14 @@ def mondrian_rectangle(img, palette, x, y, rect_len, rect_ht, rect_fill, line_ov
         rect_fill (int): index to use to fill the rectangle with in (rgb) from palette (modulo to prevent error).
         line_overdraw (int): The amount of overdraw for the black lines.
     """
+    # Unpack strings.
+    x = int(x)
+    y = int(y)
+    rect_len = int(rect_len)
+    rect_ht = int(rect_ht)
+    rect_fill = int(rect_fill)
+    line_overdraw = int(line_overdraw)
+    
     draw = ImageDraw.Draw(img)
     draw.rectangle(xy=(x, y, x + rect_len, y + rect_ht),
                          fill=palette[rect_fill%len(palette)])
