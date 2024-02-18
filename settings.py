@@ -26,6 +26,7 @@ rules = {
         'pencil-filter:#p-sigma_s#:#p-sigma_r#:#p-shade_factor#:#p-isbw#',
         'walkers:#palette#:#num_walkers#:#walk_type#',
         'basic_trig:#palette#:#trig_num_to_draw#:#trig_draw_type#',
+        'mondrian-rectangle:#palette#:#mondrian-x#:#mondrian-y#:#mondrian-width#:#mondrian-height#:#mondrian-fill#:#mondrian-line-overdraw#',
     ],
     # pixel sort parameters
     'pixel-sort-angle': [str(x) for x in range(0, 360)],
@@ -78,5 +79,13 @@ rules = {
     # basic trig functions
     'trig_num_to_draw': [str(x) for x in range(1,100)],
     'trig_draw_type': ['circle', 'rect'],
+    # mondrian parameters
+    'mondrian-x': [str(x) for x in range(0, DIM[0])],
+    'mondrian-y': [str(x) for x in range(0, DIM[1])],
+    'mondrian-width': [str(x) for x in range(10, DIM[0])],
+    'mondrian-height': [str(x) for x in range(10, DIM[1])],
+    'mondrian-fill': [str(x) for x in range(20)],
+    'mondrian-line-overdraw': [str(x) for x in range(400)],
 }
+
 grammar = tracery.Grammar(rules)

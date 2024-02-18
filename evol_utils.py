@@ -207,7 +207,10 @@ def evaluate_individual(g):
             walkers(g.image, rng, palette=_technique[1], num_walkers=int(_technique[2]), walk_type=_technique[3])
         elif _technique[0] == 'basic_trig':
             basic_trig(g.image, rng, palette=_technique[1], num_to_draw=int(_technique[2]), drawtype=_technique[3])
-        
+        elif _technique[0] == 'mondrian-rectangle':
+            mondrian_rectangle(g.image, _technique[1], _technique[2], _technique[3],
+                         _technique[4], _technique[5], _technique[6], _technique[7])    
+    
     return g
 
 
