@@ -114,7 +114,7 @@ if __name__ == '__main__':
         toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=False, num_objectives=1)
     else:
         # Register the selection function.
-        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.85, excl_indicies=[0,3])
+        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.85, excl_indicies=[0,1,2,3])
 
     # Crossover and mutation probability
     cxpb, mutpb = 0.5, 0.4
