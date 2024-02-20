@@ -672,8 +672,16 @@ def singlePointMutation(ind):
             gene[1] = ind.rng.choice(palettes)
             gene[2] = str(ind.rng.randint(1, 100))
             gene[3] = ind.rng.choice(['circle', 'rect'])
-
-        # no params here - placeholders if we augment
+	elif technique == "mondrian-rectangle":
+            gene[1] = random.choice(palettes)
+            gene[2] = str((int(gene[2]) + random.randint(-20,20)) % ExperimentSettings.DIM[0]) # mondrian-x
+            gene[3] = str((int(gene[3]) + random.randint(-20,20)) % ExperimentSettings.DIM[1]) # mondrian-y
+            gene[4] = str((int(gene[4]) + random.randint(-20,20)) % ExperimentSettings.DIM[0]+10) # mondrian-width
+            gene[5] = str((int(gene[5]) + random.randint(-20,20)) % ExperimentSettings.DIM[1]+10) # mondrian-height
+            gene[6] = str(random.randint(0,20)) # mondrian-fill
+            gene[7] = str((int(gene[7]) + random.randint(-20,20)) % 400) # mondrian-line-overdraw
+        
+	# no params here - placeholders if we augment
         # elif technique == "stippled":
         #     pass
         # elif technique == "wolfram-ca":
