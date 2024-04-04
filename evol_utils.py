@@ -421,7 +421,7 @@ def hsv_color_list(image):
 
 def score_art_tf(_population):
     #Load the saved means
-    tensor_folder = './meanDiffModel/'
+    tensor_folder = './meanDiffModelV2/'
     load_path = os.path.join(tensor_folder, 'mean_features_by_label.pt')
 
     fitnesses = []
@@ -432,7 +432,8 @@ def score_art_tf(_population):
 
     net = Net()
 
-    modelLocation = './meanDiffModel/paintingVsSculpture.pth'
+    # modelLocation = './meanDiffModel/paintingVsSculpture.pth'
+    modelLocation = './meanDiffModelV2/artVsRandomNoise.pth'
    
     net.load_state_dict(torch.load(modelLocation, map_location=torch.device('cpu')))
 
