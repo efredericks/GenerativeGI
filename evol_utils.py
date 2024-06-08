@@ -412,11 +412,11 @@ def hsv_color_list(image):
   #Sort them by count number(first element of tuple)
   sorted_pixels = sorted(pixels, key=lambda t: t[0])
   
-  for color in sorted_pixels:
-    print(color)
+  #EMF for color in sorted_pixels:
+    #EMF print(color)
     
   # Print the total number of pixels.
-  print(sum([color[0] for color in sorted_pixels]))
+  #EMF print(sum([color[0] for color in sorted_pixels]))
   return sorted_pixels
 
 def score_art_tf(_population):
@@ -778,7 +778,10 @@ def epsilon_lexicase_selection(population,
     rng = population[0].rng
 
     # Get the fit indicies from the global fit indicies.
-    fit_indicies = glob_fit_indicies if not shuffle else [
+    #fit_indicies = glob_fit_indicies if not shuffle else [
+    #    i for i in range(len(population[0].fitness.weights))
+    #]
+    fit_indicies = glob_fit_indicies if shuffle else [
         i for i in range(len(population[0].fitness.weights))
     ]
 
