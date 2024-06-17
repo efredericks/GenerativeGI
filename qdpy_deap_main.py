@@ -12,18 +12,27 @@ from copy import deepcopy
 import multiprocessing as mpc
 import numpy as np
 
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
+
+from qdpy.phenotype import *
+from qdpy.containers import *
+from qdpy.benchmarks import *
+from qdpy.plots import *
+
+
 from deap import base
 from deap import creator
 from deap import tools
 
-from PIL import Image#, ImageTk
-#import tkinter as tk
+from PIL import Image, ImageTk
+import tkinter as tk
 
 import evol_utils
 from generative_object import GenerativeObject
 
 ids_to_save = []
-ffs_to_exclude = []
 
 # Image selection for tkinter
 def selectImage(idx):
@@ -35,11 +44,9 @@ def evaluate_ind(g):
     return evol_utils.evaluate_individual(g)
     
 def getFitnesses(_pop):
-    #return [[u_c, neg_sp, art_sc] for u_c, neg_sp, art_sc in zip(evol_utils.numUniqueTechniques(_pop), evol_utils.score_negative_space(_pop), evol_utils.score_art_tf(_pop))]
     return [[p_c, g_c, u_c, c_c, neg_sp, art_sc] for p_c, g_c, u_c, c_c, neg_sp, art_sc in zip(evol_utils.pairwiseComparison(_pop), evol_utils.uniqueGeneCount(_pop), evol_utils.numUniqueTechniques(_pop), evol_utils.chebyshev(_pop), evol_utils.score_negative_space(_pop), evol_utils.score_art_tf(_pop))]
 
 # Initial Fitnesses: 
-#creator.create("Fitness", base.Fitness, weights=([1.0, -1.0, -1.0]))
 creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0, 1.0, -1.0, -1.0]))
 creator.create("Individual", GenerativeObject, fitness=creator.Fitness)
 
@@ -59,24 +66,7 @@ if __name__ == '__main__':
     parser.add_argument("--human_interaction", action="store_true", help="Activate GUI interaction for user involvement.")
     parser.add_argument("--human_interaction_gens", type=int, default=5, help="Number of generations to solicit user feedback if human_interaction flag is true")
     parser.add_argument("--clear_canvas", action="store_true", help="To clear or not clear canvas during evolutionary operations.")
-
-    ## ffs
-    parser.add_argument("--ff_rms", action="store_true", help="exclude rms pairwise")
-    parser.add_argument("--ff_gc", action="store_true", help="exclude duplicate genes")
-    parser.add_argument("--ff_ut", action="store_true", help="exclude unique techniques")
-    parser.add_argument("--ff_cheby", action="store_true", help="exclude chebyshev")
-    parser.add_argument("--ff_neg", action="store_true", help="exclude negative space")
-    parser.add_argument("--ff_art", action="store_true", help="exclude art classifier")
-
     args = parser.parse_args()
-
-    if args.ff_rms: ffs_to_exclude.append(0)
-    if args.ff_gc: ffs_to_exclude.append(1)
-    if args.ff_ut: ffs_to_exclude.append(2)
-    if args.ff_cheby: ffs_to_exclude.append(3)
-    if args.ff_neg: ffs_to_exclude.append(4)
-    if args.ff_art: ffs_to_exclude.append(5)
-
 
     # Create output directories if they don't already exist.
     # Treatment Folder
@@ -86,10 +76,6 @@ if __name__ == '__main__':
     # Replicate Folder
     if not os.path.exists("{}/{}/{}".format(args.output_path,args.treatment,args.run_num)):
         os.mkdir("{}/{}/{}".format(args.output_path,args.treatment,args.run_num))
-
-    # Population temp dir
-    if not os.path.exists("{}/{}/{}/individuals".format(args.output_path,args.treatment,args.run_num)):
-        os.mkdir("{}/{}/{}/individuals".format(args.output_path,args.treatment,args.run_num))
 
     # Write args to file.
     with open("{}/{}/{}/commandline_args.txt".format(args.output_path,args.treatment,args.run_num), 'w') as f:
@@ -135,10 +121,10 @@ if __name__ == '__main__':
 
     if not args.lexicase:
         # Register the selection function.
-        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=False, num_objectives=1, excl_indicies=ffs_to_exclude)
+        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=False, num_objectives=1)
     else:
         # Register the selection function.
-        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=6, epsilon=0.85, excl_indicies=ffs_to_exclude)
+        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.85)
 
     # Crossover and mutation probability
     cxpb, mutpb = 0.5, 0.4
@@ -177,9 +163,7 @@ if __name__ == '__main__':
         
     for i in range(len(pop)):
         print(pop[i]._id, pop[i].fitness.values, pop[i].grammar)
-        img = evol_utils.load_individual_image(pop[i])
-        img.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
-        #pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
+        pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
 
     # Only log fitnesses if we aren't resuming from a prior checkpoint.
     if not resume_evolution:
@@ -190,7 +174,7 @@ if __name__ == '__main__':
     for g in range(gen_reached,args.gens):
         glob_cur_gen = g
         if args.lexicase:
-            evol_utils.shuffle_fit_indicies(pop[0], excl_indicies=ffs_to_exclude)
+            evol_utils.shuffle_fit_indicies(pop[0])
 
         # Pull out the elite individual to save for later.
         elite = toolbox.select_elite(pop)
@@ -241,8 +225,7 @@ if __name__ == '__main__':
         evol_utils.writeGeneration(out_fit_file,g,pop)
 
         # Popup a tkinter gui window and have the user select the 5 'best' images
-        """
-        if args.human_interaction:
+        if args.human_interaction and g > 0 and ((g % args.human_interaction_gens) == 0):
             root = tk.Tk()
             root.geometry("1000x1000")
             frame = tk.Frame(root)
@@ -305,7 +288,6 @@ if __name__ == '__main__':
 
 
 
-        """
 
         # Log the population at 100 generation intervals.
         #if g % log_interval == 0:
@@ -324,6 +306,4 @@ if __name__ == '__main__':
     evol_utils.Logging.writePopulationInformation(pop_log_file, pop)
     for i in range(len(pop)):
         print(pop[i]._id, pop[i].fitness.values, pop[i].grammar)
-        img = evol_utils.load_individual_image(pop[i])
-        img.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
-        #pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
+        pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))

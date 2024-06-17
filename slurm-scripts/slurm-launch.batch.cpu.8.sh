@@ -12,9 +12,10 @@
 # #SBATCH --mail-user=frederer@gvsu.edu
 
 # #SBATCH --mem=6144
-#SBATCH --time=64:00:00
+#SBATCH --time=88:00:00
 #SBATCH --partition=cpu
 #SBATCH --cpus-per-task=8
+#SBATCH --mem-per-cpu=8192
 #SBATCH --job-name=fredericks-gengi-args-ec8 ## Name of job
 #SBATCH --output=fredericks-gengi-args-ec8.%j.%A.%a.out ##Name of output file
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
