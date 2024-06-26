@@ -5,6 +5,7 @@
 import copy
 import math
 import random
+import time
 
 import os
 
@@ -143,8 +144,11 @@ def initIndividual(ind_class):
                      ExperimentSettings.rng,
                      ExperimentSettings.grammar.flatten("#ordered_pattern#"))
 
-def load_individual_image(g):
-    path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals/{g._id}.png"
+def load_individual_image(g,local=False):
+    path = f"{g._id}.png"
+    if not local:
+        path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals/{g._id}.png"
+
     try:
         img = Image.open(path,'r')
         #print("1")
@@ -154,14 +158,16 @@ def load_individual_image(g):
         #raise AssertionError, f"Individual not found: {g._id}"
     return img
 
-def save_individual_image(g, img):
-    path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals"
+def save_individual_image(g, img, local=False):
+    path = "."
+    if not local:
+        path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals"
     idx = g._id
     if img is not None:
         img.save(f"{path}/{idx}.png")
 
 
-def evaluate_individual(g):
+def evaluate_individual(g, local=False):
     """ Wrapper to evaluate an individual.  
 
     Args:
@@ -171,64 +177,76 @@ def evaluate_individual(g):
         image an individual generates
     """
 
-    img = load_individual_image(g)
+    img = load_individual_image(g, local)
+
+    generate_time = 0.0             # time to execute loop
+    generate_timeout = 1.0 * 60.0   # overall threshold time
 
     for technique in g.grammar.split(','):
-        _technique = technique.split(":")  # split off parameters
-        c = (g.rng.randint(0,
-                            255), g.rng.randint(0,
-                                                 255), g.rng.randint(0, 255))
-        if _technique[0] == 'flow-field':
-            flowField(img, g.rng, 1, g.dim[1], g.dim[0], c, _technique[1],
-                      _technique[2], _technique[2])
-        elif _technique[0] == 'stippled':
-            stippledBG(img, g.rng, c, g.dim)
-        elif _technique[0] == 'pixel-sort':
-            # 1: angle
-            # 2: interval
-            # 3: sorting algorithm
-            # 4: randomness
-            # 5: character length
-            # 6: lower threshold
-            # 7: upper threshold
-            img = pixelSort(img, g.rng, _technique[1:])
+        if generate_time > generate_timeout:
+            print("ERROR: OUTTA TIME BABYYY")
+            break
+        else: 
+            start_time = time.time()
 
-        elif _technique[0] == 'dither':
-            if _technique[1] == 'grayscale':
-                img = convert_grayscale(img, rng)
-            elif _technique[1] == 'halftone':
-                img = convert_halftoning(img, rng)
-            elif _technique[1] == 'dither':
-                img = convert_dithering(img, rng)
-            elif _technique[1] == 'primaryColors':
-                img = convert_primary(img, rng)
-            else:
-                img = simpleDither(img, rng)
-        elif _technique[0] == 'wolfram-ca':
-            WolframCA(img, rng, _technique[1])
-        elif _technique[0] == 'drunkardsWalk':
-            drunkardsWalk(img, rng, palette=_technique[1])
-        elif _technique[0] == 'flow-field-2':
-            flowField2(img, rng, _technique[1], _technique[2], _technique[3],
-                       _technique[4])
-        elif _technique[0] == 'circle-packing':
-            circlePacking(img, rng, _technique[1], _technique[2])
-        elif _technique[0] == 'rgb-shift':
-            img = RGBShift(img, rng, float(_technique[1]), float(_technique[2]), float(_technique[3]), float(_technique[4]), float(_technique[5]), float(_technique[6]), float(_technique[7]), float(_technique[8]), float(_technique[9]))
-        elif _technique[0] == 'noise-map':
-            img = noiseMap(img, rng, _technique[1], float(_technique[2]), float(_technique[3]), float(_technique[4]))
-        elif _technique[0] == 'oil-painting-filter':
-            img = openCV_oilpainting(img, rng, int(_technique[1]))
-        elif _technique[0] == 'watercolor-filter':
-            img = openCV_watercolor(img, rng, int(_technique[1]), float(_technique[2]))
-        elif _technique[0] == 'pencil-filter':
-            img = openCV_pencilSketch(img, rng, int(_technique[1]), float(_technique[2]), float(_technique[3]), _technique[4])
-        elif _technique[0] == 'walkers':
-            walkers(img, rng, palette=_technique[1], num_walkers=int(_technique[2]), walk_type=_technique[3])
-        elif _technique[0] == 'basic_trig':
-            basic_trig(img, rng, palette=_technique[1], num_to_draw=int(_technique[2]), drawtype=_technique[3])
+            _technique = technique.split(":")  # split off parameters
+            c = (g.rng.randint(0,
+                                255), g.rng.randint(0,
+                                                    255), g.rng.randint(0, 255))
+            if _technique[0] == 'flow-field':
+                flowField(img, g.rng, 1, g.dim[1], g.dim[0], c, _technique[1],
+                        _technique[2], _technique[2])
+            elif _technique[0] == 'stippled':
+                stippledBG(img, g.rng, c, g.dim)
+            elif _technique[0] == 'pixel-sort':
+                # 1: angle
+                # 2: interval
+                # 3: sorting algorithm
+                # 4: randomness
+                # 5: character length
+                # 6: lower threshold
+                # 7: upper threshold
+                img = pixelSort(img, g.rng, _technique[1:])
+
+            elif _technique[0] == 'dither':
+                if _technique[1] == 'grayscale':
+                    img = convert_grayscale(img, g.rng)
+                elif _technique[1] == 'halftone':
+                    img = convert_halftoning(img, g.rng)
+                elif _technique[1] == 'dither':
+                    img = convert_dithering(img, g.rng)
+                elif _technique[1] == 'primaryColors':
+                    img = convert_primary(img, g.rng)
+                else:
+                    img = simpleDither(img, g.rng)
+            elif _technique[0] == 'wolfram-ca':
+                WolframCA(img, g.rng, _technique[1])
+            elif _technique[0] == 'drunkardsWalk':
+                drunkardsWalk(img, g.rng, palette=_technique[1])
+            elif _technique[0] == 'flow-field-2':
+                flowField2(img, g.rng, _technique[1], _technique[2], _technique[3],
+                        _technique[4])
+            elif _technique[0] == 'circle-packing':
+                circlePacking(img, g.rng, _technique[1], _technique[2])
+            elif _technique[0] == 'rgb-shift':
+                img = RGBShift(img, g.rng, float(_technique[1]), float(_technique[2]), float(_technique[3]), float(_technique[4]), float(_technique[5]), float(_technique[6]), float(_technique[7]), float(_technique[8]), float(_technique[9]))
+            elif _technique[0] == 'noise-map':
+                img = noiseMap(img, g.rng, _technique[1], float(_technique[2]), float(_technique[3]), float(_technique[4]))
+            elif _technique[0] == 'oil-painting-filter':
+                img = openCV_oilpainting(img, g.rng, int(_technique[1]))
+            elif _technique[0] == 'watercolor-filter':
+                img = openCV_watercolor(img, g.rng, int(_technique[1]), float(_technique[2]))
+            elif _technique[0] == 'pencil-filter':
+                img = openCV_pencilSketch(img, g.rng, int(_technique[1]), float(_technique[2]), float(_technique[3]), _technique[4])
+            elif _technique[0] == 'walkers':
+                walkers(img, g.rng, palette=_technique[1], num_walkers=int(_technique[2]), walk_type=_technique[3])
+            elif _technique[0] == 'basic_trig':
+                basic_trig(img, g.rng, palette=_technique[1], num_to_draw=int(_technique[2]), drawtype=_technique[3])
+
+            end_time = time.time()
+            generate_time += end_time - start_time
         
-    save_individual_image(g, img)
+    save_individual_image(g, img, local)
 
     return g
 
