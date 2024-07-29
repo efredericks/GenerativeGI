@@ -14,7 +14,7 @@ rules = {
     'techniques': ['#technique#', '#techniques#,#technique#'],
     'technique': [
         'stippled:', 'wolfram-ca:#palette#',
-        'flow-field:#flow-field-type#:#flow-field-zoom#',
+#        'flow-field:#flow-field-type#:#flow-field-zoom#',
         'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#',
         'drunkardsWalk:#palette#', 'dither:#ditherType#',
         'flow-field-2:#palette#:#flow-field-2-type#:#flow-field-2-noisescale#:#flow-field-2-resolution#',

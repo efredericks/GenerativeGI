@@ -6,8 +6,8 @@
 # #SBATCH --partition=cpu # all ##Partition I want to use
 # #SBATCH --ntasks=15 ##Number of task
 # #SBATCH --cpus-per-task=4 #8
-# #SBATCH --job-name=fredericks-gengi-args-ec2 ## Name of job
-# #SBATCH --output=fredericks-gengi-args-ec2.%j.%A.%a.out ##Name of output file
+# #SBATCH --job-name=fredericks-gengi-args-ec1 ## Name of job
+# #SBATCH --output=fredericks-gengi-args-ec1.%j.%A.%a.out ##Name of output file
 # #SBATCH --mail-type=END,FAIL,TIME_LIMIT
 # #SBATCH --mail-user=frederer@gvsu.edu
 
@@ -16,8 +16,8 @@
 #SBATCH --partition=cpu
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=8192
-#SBATCH --job-name=fredericks-gengi-args-ec2 ## Name of job
-#SBATCH --output=fredericks-gengi-args-ec2.%j.%A.%a.out ##Name of output file
+#SBATCH --job-name=fredericks-gengi-args-ec1 ## Name of job
+#SBATCH --output=fredericks-gengi-args-ec1.%j.%A.%a.out ##Name of output file
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=frederer@gvsu.edu
 
@@ -27,8 +27,7 @@
 
 #d="/home/frederer/GenerativeGI"
 d="/mnt/home/frederer/GenerativeGI-withargs"
-w="ec2"
+w="ec1"
 source /mnt/home/frederer/gengi/bin/activate
-
-srun time python3 $d/deap_main.py --gens 100 --pop_size 100 --treatment ${SLURM_ARRAY_TASK_ID} --run_num ${SLURM_ARRAY_TASK_ID} --output_path $d/$w/${SLURM_ARRAY_TASK_ID} --lexicase --shuffle --ff_rms --ff_gc --ff_ut --ff_cheby --ff_neg
+srun time python3 $d/deap_main.py --gens 100 --pop_size 100 --treatment ${SLURM_ARRAY_TASK_ID} --run_num ${SLURM_ARRAY_TASK_ID} --output_path $d/$w/${SLURM_ARRAY_TASK_ID} --lexicase --shuffle --ff_rms --ff_gc --ff_ut --ff_cheby --ff_neg --ff_art
 #time python3 $d/deap_main.py --gens 100 --pop_size 100 --treatment ${SLURM_ARRAY_TASK_ID} --run_num ${SLURM_ARRAY_TASK_ID} --output_path $d/$w/${SLURM_ARRAY_TASK_ID} --lexicase --shuffle --ff_rms --ff_gc --ff_ut --ff_cheby --ff_neg --ff_art

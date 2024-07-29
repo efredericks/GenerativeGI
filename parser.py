@@ -7,20 +7,24 @@ import scipy.stats as stats
 import pandas as pd
 import numpy as np
 
-expr_names = ["EC9", "EC31", "EC27", "EC60"]
+NUM_EXPR = 63
 
-exprs = [
-"./art-only.art_and_num",
-"./gc_uc_cc_negsp_artsc",
-"./gc_uc_negsp_artsc",
-"./pc_gc_uc_negsp_artsc",
+#expr_names = ["EC9", "EC31", "EC27", "EC60"]
 
-#"./paper_runs/clear_lexicase",
-#"./paper_runs/clear_single_pairwise",
-#"./paper_runs/no_clear_lexicase",
-#"./paper_runs/no_clear_single_pairwise",
-#"./paper_runs/random",
-]
+#base_dir = "./GPTP-exprs-timed"
+
+#base_dir = "./GPTP-exprs-3min-no-FF1"
+#base_name = "3min-no-ff1"
+
+base_dir = "./GPTP-exprs-fixedmut-3min"
+base_name = "3min-noff1-fixedmut"
+
+expr_names = []
+exprs = []
+#expr_fit_correlation = {}
+for i in range(1,NUM_EXPR+1):#64):
+    expr_names.append(f"EC{i}")
+    exprs.append(f"{base_dir}/ec{i}")
 
 times = {}
 programs = {}
@@ -29,12 +33,6 @@ programs = {}
 ffs = [
   'pc', 'gc', 'ut', 'cd', 'ns', 'ac'
 ]
-expr_fit_correlation = {
-  'EC9': [],
-  'EC31': [],
-  'EC27': [],
-  'EC60': [],
-}
 
 def normalize_data(val, _min, _max, which='max', _new_min=0.0, _new_max=1.0):
     if which == 'max': # maximize
@@ -46,7 +44,7 @@ def add_fitness_fn(idx, ff):
     expr_fit_correlation[idx].append(ff)
 
 fit_data = {}
-for i in range(1,65):
+for i in range(1,NUM_EXPR+1):#64):
     fit_data[f"EC{i}"] = {}
     for ff in ffs:
         fit_data[f"EC{i}"][ff] = []
@@ -63,29 +61,8 @@ normalize_ffs['ns']['which'] = 'min'
 normalize_ffs['ac']['which'] = 'min'
 
 print(fit_data)
-# parse fitnesses - need to correlate configs with ffs as we didn't track that in the runs
-add_fitness_fn('EC9', ffs[2])
-add_fitness_fn('EC9', ffs[5])
-
-add_fitness_fn('EC31', ffs[1])
-add_fitness_fn('EC31', ffs[2])
-add_fitness_fn('EC31', ffs[3])
-add_fitness_fn('EC31', ffs[4])
-add_fitness_fn('EC31', ffs[5])
-
-add_fitness_fn('EC27', ffs[1])
-add_fitness_fn('EC27', ffs[2])
-add_fitness_fn('EC27', ffs[4])
-add_fitness_fn('EC27', ffs[5])
-
-add_fitness_fn('EC60', ffs[0])
-add_fitness_fn('EC60', ffs[1])
-add_fitness_fn('EC60', ffs[2])
-add_fitness_fn('EC60', ffs[4])
-add_fitness_fn('EC60', ffs[5])
 
 # fitness normalization and heatmap
-"""
 for i in range(len(exprs)):
     expr = exprs[i]
     expr_name = expr_names[i]
@@ -104,11 +81,13 @@ for i in range(len(exprs)):
                         fits = _line[1].strip()
                         fits = fits[1:] # parens
                         fits = fits[:-1]
-                        fits = fits.split(',') # into vals
 
-                        for j in range(len(fits)-1):
-                            fit = float(fits[j].strip())
-                            fit_id = expr_fit_correlation[expr_name][j]
+                        _fits = fits.split(",")
+
+                        for j in range(len(_fits)): #range(len(fits)-1):
+                            #print(_fits[j].strip())
+                            fit = float(_fits[j].strip())#float(fits[j].strip())
+                            fit_id = ffs[j] # expr_fit_correlation[expr_name][j]
                             fit_data[expr_name][fit_id].append(fit)
 
                             # normalize tracking
@@ -118,10 +97,8 @@ for i in range(len(exprs)):
                                 normalize_ffs[fit_id]['min'] = fit
 
 
-#    normalize_ffs[ff] = {'max': 0.0, 'min': 0.0}
 
 # normalize fitness values now
-#print(normalize_ffs)
 for i in range(len(exprs)):
     expr = exprs[i]
     expr_name = expr_names[i]
@@ -133,8 +110,8 @@ for i in range(len(exprs)):
             fit_data[expr_name][fit_id][j] = normalize_data(fit, normalize_ffs[fit_id]['min'], normalize_ffs[fit_id]['max'], which=normalize_ffs[fit_id]['which'])
 
 # fill numpy array with averaged values to go into heatmap
-fit_array = np.nan * np.empty((len(ffs), 64))
-for i in range(1,64):#len(exprs)):
+fit_array = np.nan * np.empty((len(ffs), NUM_EXPR)) # 64
+for i in range(1,NUM_EXPR+1):#len(exprs)):
     expr_name = f"EC{i}"
     if expr_name in expr_names:
         for fit_id in fit_data[expr_name]:
@@ -142,17 +119,26 @@ for i in range(1,64):#len(exprs)):
                 avg = sum(fit_data[expr_name][fit_id]) / len(fit_data[expr_name][fit_id])
                 fit_array[ffs.index(fit_id),i-1] = avg
 
-#print(fit_array)
+print(fit_array)
 
-#fit_df = pd.DataFrame(fit_data)
-xlabs = [f"EC{i}" for i in range(1,65)]
-ylabs = [f"ff_{f}" for f in ffs]
-sns.heatmap(data=fit_array, vmin=0.0, vmax=1.0, xticklabels=xlabs, yticklabels=ylabs, cmap='coolwarm', linewidths=0.5)
-plt.show()
-"""
+xlabs = [f"{i}" for i in range(1,NUM_EXPR+1)]#64)]
+ylabs = [f"FF_{f}" for f in ffs]
+heatmap = sns.heatmap(data=fit_array, vmin=0.0, vmax=1.0, xticklabels=xlabs, yticklabels=ylabs, cmap='coolwarm', linewidths=0.5)
+plt.xticks(fontsize=5, rotation=90)
+plt.xlabel('Experimental configuration')#, size=24)
+ticklbls = heatmap.get_xticklabels(which='both')
+for t in ticklbls:
+    t.set_ha('left')
+
+print(fit_array)
+
+plt.tight_layout()
+plt.savefig(f"gptpt24_fitness_heatmap_{base_name}.png")
+#plt.show()
 
 
 # timing and program analysis
+"""
 for expr in exprs:
     times[expr] = []
     programs[expr] = []
@@ -242,6 +228,7 @@ sns.swarmplot(data=sorted_vals, size=6, edgecolor="black", linewidth=.9)
 plt.xticks(plt.xticks()[0], expr_names)#sorted_keys)
 
 plt.show()
+"""
 
 
 # program counts

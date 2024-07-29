@@ -2,6 +2,8 @@
 Entry point for the DEAP implementation of GenerativeGI
 """
 
+import shutil
+
 import argparse
 import json
 import os
@@ -221,8 +223,9 @@ if __name__ == '__main__':
             ind.setRNG(shared_rng)
 
         for mutant in pop:
-            toolbox.mutate(mutant)
-            del mutant.fitness.values
+            if shared_rng.random() < mutpb:
+                toolbox.mutate(mutant)
+                del mutant.fitness.values
 
         pop = toolbox.map(toolbox.evaluate, pop)
 
@@ -327,3 +330,9 @@ if __name__ == '__main__':
         img = evol_utils.load_individual_image(pop[i])
         img.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
         #pop[i].image.save("{}/{}/{}/img-{}.png".format(args.output_path,args.treatment,args.run_num,pop[i]._id))
+
+    # Cleanup intermediate individuals
+    if os.path.exists("{}/{}/{}/individuals".format(args.output_path,args.treatment,args.run_num)):
+        shutil.rmtree("{}/{}/{}/individuals".format(args.output_path,args.treatment,args.run_num))
+
+

@@ -5,6 +5,7 @@
 import copy
 import math
 import random
+
 import time
 
 import os
@@ -144,11 +145,8 @@ def initIndividual(ind_class):
                      ExperimentSettings.rng,
                      ExperimentSettings.grammar.flatten("#ordered_pattern#"))
 
-def load_individual_image(g,local=False):
-    path = f"{g._id}.png"
-    if not local:
-        path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals/{g._id}.png"
-
+def load_individual_image(g):
+    path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals/{g._id}.png"
     try:
         img = Image.open(path,'r')
         #print("1")
@@ -158,16 +156,14 @@ def load_individual_image(g,local=False):
         #raise AssertionError, f"Individual not found: {g._id}"
     return img
 
-def save_individual_image(g, img, local=False):
-    path = "."
-    if not local:
-        path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals"
+def save_individual_image(g, img):
+    path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals"
     idx = g._id
     if img is not None:
         img.save(f"{path}/{idx}.png")
 
 
-def evaluate_individual(g, local=False):
+def evaluate_individual(g):
     """ Wrapper to evaluate an individual.  
 
     Args:
@@ -177,25 +173,29 @@ def evaluate_individual(g, local=False):
         image an individual generates
     """
 
-    img = load_individual_image(g, local)
+    img = load_individual_image(g)
 
-    generate_time = 0.0             # time to execute loop
-    generate_timeout = 1.0 * 60.0   # overall threshold time
+    mins = 4.0 # 2.0
+    generate_time = 0.0           # time to execute loop
+    generate_timeout = mins * 60.0 # threshold time
 
     for technique in g.grammar.split(','):
-        if generate_time > generate_timeout:
-            print("ERROR: OUTTA TIME BABYYY")
+        if generate_time > generate_timeout: # violated timeout
+            print("----")
+            print(f"{g._id} - Violated timing right before {technique}")
+            print(g.grammar)
+            print("----")
             break
-        else: 
+        else: # within execution time
             start_time = time.time()
 
             _technique = technique.split(":")  # split off parameters
             c = (g.rng.randint(0,
                                 255), g.rng.randint(0,
-                                                    255), g.rng.randint(0, 255))
+                                                     255), g.rng.randint(0, 255))
             if _technique[0] == 'flow-field':
                 flowField(img, g.rng, 1, g.dim[1], g.dim[0], c, _technique[1],
-                        _technique[2], _technique[2])
+                          _technique[2], _technique[2])
             elif _technique[0] == 'stippled':
                 stippledBG(img, g.rng, c, g.dim)
             elif _technique[0] == 'pixel-sort':
@@ -225,7 +225,7 @@ def evaluate_individual(g, local=False):
                 drunkardsWalk(img, g.rng, palette=_technique[1])
             elif _technique[0] == 'flow-field-2':
                 flowField2(img, g.rng, _technique[1], _technique[2], _technique[3],
-                        _technique[4])
+                           _technique[4])
             elif _technique[0] == 'circle-packing':
                 circlePacking(img, g.rng, _technique[1], _technique[2])
             elif _technique[0] == 'rgb-shift':
@@ -246,7 +246,7 @@ def evaluate_individual(g, local=False):
             end_time = time.time()
             generate_time += end_time - start_time
         
-    save_individual_image(g, img, local)
+    save_individual_image(g, img)
 
     return g
 
