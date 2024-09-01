@@ -401,12 +401,14 @@ if __name__ == "__main__":
     # runGrammar(_grammar, "TEST.4.png")
 
     # # Generate 10 test images to see how the scores compared to aesthetic appeal.
-    for _ in range(10):
-      image = Image.new("RGBA", DIM, background)
-      circlePacking(image, rng, random.choice(palettes), random.randrange(10, 30))
-      score = score_triadic_color_alignment(image)
+    # for _ in range(10):
+    #   image = Image.new("RGBA", DIM, background)
+    #   circlePacking(image, rng, random.choice(palettes), random.randrange(10, 30))
+    #   score = score_triadic_color_alignment(image)
       
-      neg_score = score_negative_space(image)
-      print(neg_score)
+    #   neg_score = score_negative_space(image)
+    #   print(neg_score)
       
-      image.save(f"circles_{int(neg_score*100)}.png")
+    #   image.save(f"circles_{int(neg_score*100)}.png")
+    strange_attractor(image, rng, random.choice(palettes), DIM)
+    image.save("sa.png")

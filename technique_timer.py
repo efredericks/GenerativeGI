@@ -1,20 +1,50 @@
-import tracery
-import numpy as np
+# Gets average time of each technique for GPTP 
+
+from PIL import Image, ImageDraw
+from techniques import *
+from time import sleep
 from colour_palettes import palettes
 
-# tbd: palettes in other techniques!
+from evol_utils import evaluate_individual, initIndividual
+from generative_object import GenerativeObject
+
+import random, math
+
 
 DIM = (500,500)#(1000, 1000)
 BACKGROUND = 'black'
 
-# tracery grammar
-# leave a trailing colon after each technique for the parameter list as we're splitting on colon regardless
-rules = {
-    'ordered_pattern': ['#techniques#'],
-    'techniques': ['#technique#', '#techniques#,#technique#'],
+def runGrammar(_grammar, filename, rng):
+
+    g = GenerativeObject(DIM, rng, _grammar)
+    # g.grammar = _grammar
+    g = evaluate_individual(g)
+    g.image.save(filename)
+
+rules_to_time = [
+    'stippled', 
+    'wolfram-ca',
+    'flow-field',
+    'pixel-sort',
+    'drunkardsWalk', 
+    'dither',
+    'flow-field-2',
+    'circle-packing',
+    'rgb-shift',
+    'noise-map',
+    'oil-painting-filter',
+    'watercolor-filter',
+    'pencil-filter',
+    'walkers',
+    'basic_trig',
+]
+
+### This is a copy from settings.py to keep it pristine - if the grammar changes and this needs to be run again then it should be updated.
+test_rules = {
+    'ordered_pattern': ['#technique#'],
     'technique': [
         'stippled:', 'wolfram-ca:#palette#',
-#        'flow-field:#flow-field-type#:#flow-field-zoom#',
+        'flow-field:#flow-field-type#:#flow-field-zoom#',
         'pixel-sort:#pixel-sort-angle#:#pixel-sort-interval#:#pixel-sort-sorting#:#pixel-sort-randomness#:#pixel-sort-charlength#:#pixel-sort-lowerthreshold#:#pixel-sort-upperthreshold#',
         'drunkardsWalk:#palette#', 'dither:#ditherType#',
         'flow-field-2:#palette#:#flow-field-2-type#:#flow-field-2-noisescale#:#flow-field-2-resolution#',
@@ -79,4 +109,17 @@ rules = {
     'trig_num_to_draw': [str(x) for x in range(1,100)],
     'trig_draw_type': ['circle', 'rect'],
 }
-grammar = tracery.Grammar(rules)
+
+
+rng = random.Random(0)
+test_grammar = tracery.Grammar(test_rules)
+num_replicates = 25
+for rtt in rules_to_time:
+    remaining = num_replicates
+    while remaining > 0:
+        tg = test_grammar.flatten("#technique#")
+        if tg.split(':')[0].strip() == rtt:
+            idx = f"{rtt}_{remaining}"
+            print(tg)
+            runGrammar(tg, f"./technique_time_outputs/{idx}.png", rng)
+            remaining -= 1

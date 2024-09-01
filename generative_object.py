@@ -14,7 +14,7 @@ class GenerativeObject:
     self.dim = dim
     self.rng = rng
     self.grammar = grammar
-    self.image = Image.new("RGBA", dim, background)
+    #self.image = Image.new("RGBA", dim, background)
     self.isEvaluated = False
     self.fitness_internal = 0.0
     self.rng = None

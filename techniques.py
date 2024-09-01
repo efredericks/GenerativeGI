@@ -935,3 +935,42 @@ def drawGradient(image, rng, palette, thickness):
     col2 = rng.choice(palette)
 
     # lerpcolor?
+
+
+# Clifford attractor
+def clifford(x, y, a, b, c, d):
+    _x = math.sin(a*y) + c*math.cos(a*x)
+    _y = math.sin(b*x) + d*math.cos(b*y)
+    return {'x': _x, 'y': _y}
+
+def strange_attractor(image, rng, palette, DIM, indiv):
+    draw = ImageDraw.Draw(image)
+    palette = getPaletteValues(palette)
+
+    a = indiv[0]# -1.2
+    b = indiv[1]# 1.8
+    c = indiv[2]# 1.5
+    d = indiv[3]# 0.7
+
+    pointSize = 1 
+    iterations = 10000#00
+    points = []
+    points.append({'x':0.1, 'y':-0.1})
+    for i in range(1,iterations):
+        next_point = clifford(points[i-1]['x'], points[i-1]['y'], a, b, c, d)
+        points.append({'x':next_point['x'], 'y':next_point['y']})
+
+        x = (next_point['x'] * float(DIM[0])) / 4. + float(DIM[0]) / 2.
+        y = (next_point['y'] * float(DIM[1])) / 4. + float(DIM[1]) / 2.
+
+        col = ImageColor.getrgb(palette[0])
+        # draw.rectangle([x, y, x + pointSize, y + pointSize], fill="#ffffff") # works better with other techniques
+        draw.point([x,y], fill="#ffffff")
+    
+    #nbp = count_nonblack_pil(image)
+    #tot = DIM[0] * DIM[1]
+    #if nbp > 0:
+    #  perc = tot / nbp
+    #else:
+    #  perc = 0.
+    #print(nbp,tot,perc)

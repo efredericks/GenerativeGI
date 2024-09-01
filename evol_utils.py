@@ -6,6 +6,8 @@ import copy
 import math
 import random
 
+import time
+
 import os
 
 from PIL import Image
@@ -143,6 +145,23 @@ def initIndividual(ind_class):
                      ExperimentSettings.rng,
                      ExperimentSettings.grammar.flatten("#ordered_pattern#"))
 
+def load_individual_image(g):
+    path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals/{g._id}.png"
+    try:
+        img = Image.open(path,'r')
+        #print("1")
+    except:
+        img = Image.new("RGBA", DIM, BACKGROUND)
+        #print("2",path)
+        #raise AssertionError, f"Individual not found: {g._id}"
+    return img
+
+def save_individual_image(g, img):
+    path = f"{args.output_path}/{args.treatment}/{args.run_num}/individuals"
+    idx = g._id
+    if img is not None:
+        img.save(f"{path}/{idx}.png")
+
 
 def evaluate_individual(g):
     """ Wrapper to evaluate an individual.  
@@ -153,61 +172,82 @@ def evaluate_individual(g):
     Returns:
         image an individual generates
     """
-    for technique in g.grammar.split(','):
-        _technique = technique.split(":")  # split off parameters
-        c = (g.rng.randint(0,
-                            255), g.rng.randint(0,
-                                                 255), g.rng.randint(0, 255))
-        if _technique[0] == 'flow-field':
-            flowField(g.image, g.rng, 1, g.dim[1], g.dim[0], c, _technique[1],
-                      _technique[2], _technique[2])
-        elif _technique[0] == 'stippled':
-            stippledBG(g.image, g.rng, c, g.dim)
-        elif _technique[0] == 'pixel-sort':
-            # 1: angle
-            # 2: interval
-            # 3: sorting algorithm
-            # 4: randomness
-            # 5: character length
-            # 6: lower threshold
-            # 7: upper threshold
-            g.image = pixelSort(g.image, g.rng, _technique[1:])
 
-        elif _technique[0] == 'dither':
-            if _technique[1] == 'grayscale':
-                g.image = convert_grayscale(g.image, rng)
-            elif _technique[1] == 'halftone':
-                g.image = convert_halftoning(g.image, rng)
-            elif _technique[1] == 'dither':
-                g.image = convert_dithering(g.image, rng)
-            elif _technique[1] == 'primaryColors':
-                g.image = convert_primary(g.image, rng)
-            else:
-                g.image = simpleDither(g.image, rng)
-        elif _technique[0] == 'wolfram-ca':
-            WolframCA(g.image, rng, _technique[1])
-        elif _technique[0] == 'drunkardsWalk':
-            drunkardsWalk(g.image, rng, palette=_technique[1])
-        elif _technique[0] == 'flow-field-2':
-            flowField2(g.image, rng, _technique[1], _technique[2], _technique[3],
-                       _technique[4])
-        elif _technique[0] == 'circle-packing':
-            circlePacking(g.image, rng, _technique[1], _technique[2])
-        elif _technique[0] == 'rgb-shift':
-            g.image = RGBShift(g.image, rng, float(_technique[1]), float(_technique[2]), float(_technique[3]), float(_technique[4]), float(_technique[5]), float(_technique[6]), float(_technique[7]), float(_technique[8]), float(_technique[9]))
-        elif _technique[0] == 'noise-map':
-            g.image = noiseMap(g.image, rng, _technique[1], float(_technique[2]), float(_technique[3]), float(_technique[4]))
-        elif _technique[0] == 'oil-painting-filter':
-            g.image = openCV_oilpainting(g.image, rng, int(_technique[1]))
-        elif _technique[0] == 'watercolor-filter':
-            g.image = openCV_watercolor(g.image, rng, int(_technique[1]), float(_technique[2]))
-        elif _technique[0] == 'pencil-filter':
-            g.image = openCV_pencilSketch(g.image, rng, int(_technique[1]), float(_technique[2]), float(_technique[3]), _technique[4])
-        elif _technique[0] == 'walkers':
-            walkers(g.image, rng, palette=_technique[1], num_walkers=int(_technique[2]), walk_type=_technique[3])
-        elif _technique[0] == 'basic_trig':
-            basic_trig(g.image, rng, palette=_technique[1], num_to_draw=int(_technique[2]), drawtype=_technique[3])
+    img = load_individual_image(g)
+
+    mins = 4.0 # 2.0
+    generate_time = 0.0           # time to execute loop
+    generate_timeout = mins * 60.0 # threshold time
+
+    for technique in g.grammar.split(','):
+        if generate_time > generate_timeout: # violated timeout
+            print("----")
+            print(f"{g._id} - Violated timing right before {technique}")
+            print(g.grammar)
+            print("----")
+            break
+        else: # within execution time
+            start_time = time.time()
+
+            _technique = technique.split(":")  # split off parameters
+            c = (g.rng.randint(0,
+                                255), g.rng.randint(0,
+                                                     255), g.rng.randint(0, 255))
+            if _technique[0] == 'flow-field':
+                flowField(img, g.rng, 1, g.dim[1], g.dim[0], c, _technique[1],
+                          _technique[2], _technique[2])
+            elif _technique[0] == 'stippled':
+                stippledBG(img, g.rng, c, g.dim)
+            elif _technique[0] == 'pixel-sort':
+                # 1: angle
+                # 2: interval
+                # 3: sorting algorithm
+                # 4: randomness
+                # 5: character length
+                # 6: lower threshold
+                # 7: upper threshold
+                img = pixelSort(img, g.rng, _technique[1:])
+
+            elif _technique[0] == 'dither':
+                if _technique[1] == 'grayscale':
+                    img = convert_grayscale(img, g.rng)
+                elif _technique[1] == 'halftone':
+                    img = convert_halftoning(img, g.rng)
+                elif _technique[1] == 'dither':
+                    img = convert_dithering(img, g.rng)
+                elif _technique[1] == 'primaryColors':
+                    img = convert_primary(img, g.rng)
+                else:
+                    img = simpleDither(img, g.rng)
+            elif _technique[0] == 'wolfram-ca':
+                WolframCA(img, g.rng, _technique[1])
+            elif _technique[0] == 'drunkardsWalk':
+                drunkardsWalk(img, g.rng, palette=_technique[1])
+            elif _technique[0] == 'flow-field-2':
+                flowField2(img, g.rng, _technique[1], _technique[2], _technique[3],
+                           _technique[4])
+            elif _technique[0] == 'circle-packing':
+                circlePacking(img, g.rng, _technique[1], _technique[2])
+            elif _technique[0] == 'rgb-shift':
+                img = RGBShift(img, g.rng, float(_technique[1]), float(_technique[2]), float(_technique[3]), float(_technique[4]), float(_technique[5]), float(_technique[6]), float(_technique[7]), float(_technique[8]), float(_technique[9]))
+            elif _technique[0] == 'noise-map':
+                img = noiseMap(img, g.rng, _technique[1], float(_technique[2]), float(_technique[3]), float(_technique[4]))
+            elif _technique[0] == 'oil-painting-filter':
+                img = openCV_oilpainting(img, g.rng, int(_technique[1]))
+            elif _technique[0] == 'watercolor-filter':
+                img = openCV_watercolor(img, g.rng, int(_technique[1]), float(_technique[2]))
+            elif _technique[0] == 'pencil-filter':
+                img = openCV_pencilSketch(img, g.rng, int(_technique[1]), float(_technique[2]), float(_technique[3]), _technique[4])
+            elif _technique[0] == 'walkers':
+                walkers(img, g.rng, palette=_technique[1], num_walkers=int(_technique[2]), walk_type=_technique[3])
+            elif _technique[0] == 'basic_trig':
+                basic_trig(img, g.rng, palette=_technique[1], num_to_draw=int(_technique[2]), drawtype=_technique[3])
+
+            end_time = time.time()
+            generate_time += end_time - start_time
         
+    save_individual_image(g, img)
+
     return g
 
 
@@ -218,16 +258,18 @@ def pairwiseComparison(_population):
     maxDiff = 0.0
     compared = {}
     for p in _population:
+        img = load_individual_image(p)
         maxUniques = len(set(p.grammar.split(',')))
         psum = 0
 
         # image is the background color with no changes - weed out
-        numblack = count_nonblack_pil(p.image)
+        numblack = count_nonblack_pil(img)
         if numblack == 0:
             p.setFitness(0.0)
         else:
             for p2 in _population:
                 if p != p2:
+                    img2 = load_individual_image(p2)
                     maxUniques2 = len(set(p2.grammar.split(',')))
                     if maxUniques2 > maxUniques:
                         maxUniques = maxUniques2
@@ -236,7 +278,7 @@ def pairwiseComparison(_population):
                     id2 = "{0}:{1}".format(p2._id, p._id)
                     keys = compared.keys()
                     if not id1 in keys or not id2 in keys:
-                        diff = rmsdiff(p.image, p2.image)
+                        diff = rmsdiff(img, img2)
 
                         if (diff > maxDiff):
                             maxDiff = diff
@@ -262,22 +304,24 @@ def chebyshev(_population):
     maxDiff = 0.0
     compared = {}
     for p in _population:
+        img = load_individual_image(p)
         psum = 0
 
         # image is the background color with no changes - weed out
-        numblack = count_nonblack_pil(p.image)
+        numblack = count_nonblack_pil(img)
         if numblack == 0:
             p.setFitness(0.0)
         else:
             for p2 in _population:
                 if p != p2:
+                    img2 = load_individual_image(p2)
                     id1 = "{0}:{1}".format(p._id, p2._id)
                     id2 = "{0}:{1}".format(p2._id, p._id)
                     keys = compared.keys()
                     if not id1 in keys or not id2 in keys:
-                        hist1 = cv2.calcHist(np.asarray(p.image), [0,1,2], None, [8,8,8], [0,256,0,256,0,256])
+                        hist1 = cv2.calcHist(np.asarray(img), [0,1,2], None, [8,8,8], [0,256,0,256,0,256])
                         hist1 = cv2.normalize(hist1, hist1).flatten()
-                        hist2 = cv2.calcHist(np.asarray(p2.image), [0,1,2], None, [8,8,8], [0,256,0,256,0,256])
+                        hist2 = cv2.calcHist(np.asarray(img2), [0,1,2], None, [8,8,8], [0,256,0,256,0,256])
                         hist2 = cv2.normalize(hist2, hist2).flatten()
 
                         diff = dist.chebyshev(hist1, hist2)
@@ -357,7 +401,8 @@ def score_triadic_color_alignment(_population):
     # Resize the image if we want to save time.
     #Resizing parameters
     width, height = 150, 150
-    image = p.image.copy()
+    img = load_individual_image(p)
+    image = img.copy()#p.image.copy()
     image.thumbnail((width, height), resample=0)
     
     # Good explanation of how HSV works to find complimentary colors.
@@ -412,11 +457,11 @@ def hsv_color_list(image):
   #Sort them by count number(first element of tuple)
   sorted_pixels = sorted(pixels, key=lambda t: t[0])
   
-  for color in sorted_pixels:
-    print(color)
+  #EMF for color in sorted_pixels:
+    #EMF print(color)
     
   # Print the total number of pixels.
-  print(sum([color[0] for color in sorted_pixels]))
+  #EMF print(sum([color[0] for color in sorted_pixels]))
   return sorted_pixels
 
 def score_art_tf(_population):
@@ -447,9 +492,10 @@ def score_art_tf(_population):
         #image_path = "./img/img-{0}.jpg".format(i)
         #image_path = "img/img-86.png" #"./notArtImage.jpg"
         #image = Image.open(image_path)
+        img = load_individual_image(p)
 
         # handle alpha issue 
-        image = p.image
+        image = img#p.image
         if image.mode == 'RGBA':
             # Drop the alpha channel
             image = image.convert('RGB')
@@ -510,7 +556,8 @@ def score_negative_space(_population, target_percent=.7, primary_black=True):
   fitnesses = []
   
   for p in _population:
-    color_distribution = hsv_color_list(p.image)
+    img = load_individual_image(p)
+    color_distribution = hsv_color_list(img)#p.image)
   
     total_pixels = sum([color[0] for color in color_distribution])
   
@@ -778,7 +825,10 @@ def epsilon_lexicase_selection(population,
     rng = population[0].rng
 
     # Get the fit indicies from the global fit indicies.
-    fit_indicies = glob_fit_indicies if not shuffle else [
+    #fit_indicies = glob_fit_indicies if not shuffle else [
+    #    i for i in range(len(population[0].fitness.weights))
+    #]
+    fit_indicies = glob_fit_indicies if shuffle else [
         i for i in range(len(population[0].fitness.weights))
     ]
 
