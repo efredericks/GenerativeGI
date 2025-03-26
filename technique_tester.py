@@ -238,9 +238,10 @@ def convert_primary(image):
   return new
 
 # Execute a flattened grammar string
-def runGrammar(_grammar, filename):
+def runGrammar(_grammar, rng, filename):
     # g = initIndividual(GenerativeObject)
-    g = GenerativeObject(DIM, _grammar)
+    g = GenerativeObject(DIM, rng, _grammar)
+    g.rng = rng
     # g.grammar = _grammar
     g = evaluate_individual(g)
     g.image.save(filename)
@@ -400,13 +401,54 @@ if __name__ == "__main__":
     # _grammar =  "walkers:FB8B24 D90368 820263 14342B 04A777:27:rule,rgb-shift:0.8300000000000001:0.8200000000000001:0.44:-4:-3:-1:-5:-5:-5"
     # runGrammar(_grammar, "TEST.4.png")
 
+    # for i in range(10):
+    #   grammar = tracery.Grammar(rules)
+    #   _g = grammar.flatten("#ordered_pattern#")
+    #   runGrammar(_g, rng,f"TEST_{i}.png")
+
+    # grammar = tracery.Grammar(rules)
+    _g = "rect:212:656:43:970:26:50:117:96:26:253:152:251,background:1000:1000:162:1:245:254,ellipse:266:352:687:166:91:146:138:14:5:125:160:15,rect:299:452:380:581:31:178:30:97:35:143:171:76,point:892:158:10:10:52:174,line:501:260:721:487:68:10:11:13:167"
+    runGrammar(_g, rng,f"TEST_0.png")
+
     # # Generate 10 test images to see how the scores compared to aesthetic appeal.
-    for _ in range(10):
+    """
+    for i in range(10):
       image = Image.new("RGBA", DIM, background)
-      circlePacking(image, rng, random.choice(palettes), random.randrange(10, 30))
-      score = score_triadic_color_alignment(image)
+
+      x1 = random.randint(0,DIM[0])
+      y1 = random.randint(0,DIM[0])
+      x2 = random.randint(0,DIM[0])
+      y2 = random.randint(0,DIM[0])
+      w = random.randint(1,DIM[0])
+      h = random.randint(1,DIM[1])
+      col = (
+        random.randint(0,255), random.randint(0,255),random.randint(0,255),random.randint(0,255)
+      )
+      col2 = (
+        random.randint(0,255), random.randint(0,255),random.randint(0,255),random.randint(0,255)
+      )
+      # rounded = random.choice([True, False])
+
+      # for _ in range(1000):
+      #   x1 = random.randint(0,DIM[0])
+      #   y1 = random.randint(0,DIM[0])
+      #   col = (
+      #     random.randint(0,255), random.randint(0,255),random.randint(0,255),random.randint(0,255)
+      #   )
+      #   draw_point(image, rng, 
+      #   [x1,y1,col])
+
+      draw_background(image, rng, [DIM[0], DIM[1], col])
+      # draw_line(image, rng, 
+      #   [x1,y1,x2,y2,col,w]
+      # )
+      image.save(f"lines_{i}.png")
       
-      neg_score = score_negative_space(image)
-      print(neg_score)
+      # circlePacking(image, rng, random.choice(palettes), random.randrange(10, 30))
+      # score = score_triadic_color_alignment(image)
       
-      image.save(f"circles_{int(neg_score*100)}.png")
+      # neg_score = score_negative_space(image)
+      # print(neg_score)
+      
+      # image.save(f"circles_{int(neg_score*100)}.png")
+    """

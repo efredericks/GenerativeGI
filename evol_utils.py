@@ -207,7 +207,20 @@ def evaluate_individual(g):
             walkers(g.image, rng, palette=_technique[1], num_walkers=int(_technique[2]), walk_type=_technique[3])
         elif _technique[0] == 'basic_trig':
             basic_trig(g.image, rng, palette=_technique[1], num_to_draw=int(_technique[2]), drawtype=_technique[3])
-        
+
+
+        # primitive handling
+        elif _technique[0] == 'background':
+            draw_background(g.image, rng, _technique[1:])
+        elif _technique[0] == 'point':
+            draw_point(g.image, rng, _technique[1:])
+        elif _technique[0] == 'ellipse':
+            draw_ellipse(g.image, rng, _technique[1:])
+        elif _technique[0] == 'rect':
+            draw_rect(g.image, rng, _technique[1:])
+        elif _technique[0] == 'line':
+            draw_line(g.image, rng, _technique[1:])
+
     return g
 
 
@@ -421,7 +434,7 @@ def hsv_color_list(image):
 
 def score_art_tf(_population):
     #Load the saved means
-    tensor_folder = './meanDiffModelV2/'
+    tensor_folder = './meanDiffModelV3/'
     load_path = os.path.join(tensor_folder, 'mean_features_by_label.pt')
 
     fitnesses = []
@@ -433,7 +446,8 @@ def score_art_tf(_population):
     net = Net()
 
     # modelLocation = './meanDiffModel/paintingVsSculpture.pth'
-    modelLocation = './meanDiffModelV2/artVsRandomNoise.pth'
+    # modelLocation = './meanDiffModelV2/artVsRandomNoise.pth'
+    modelLocation = './meanDiffModelV3/artVsCifar.pth'
    
     net.load_state_dict(torch.load(modelLocation, map_location=torch.device('cpu')))
 

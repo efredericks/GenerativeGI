@@ -935,3 +935,32 @@ def drawGradient(image, rng, palette, thickness):
     col2 = rng.choice(palette)
 
     # lerpcolor?
+
+## primitives
+def draw_background(img, rng, params):
+    draw = ImageDraw.Draw(img)
+    draw.rectangle(
+        [(0,0),(int(params[0]), int(params[1]))], fill=(int(params[2]),int(params[3]),int(params[4]),int(params[5]))
+    )
+
+def draw_point(img, rng, params):
+    draw = ImageDraw.Draw(img)
+    draw.point(
+        [(int(params[0]), int(params[1]))], fill=(int(params[2]),int(params[3]),int(params[4]),int(params[5]))
+    )
+
+def draw_ellipse(img, rng, params):
+    draw = ImageDraw.Draw(img)
+    draw.ellipse(
+        [(int(params[0]), int(params[1])), (int(params[0])+int(params[2]), int(params[1])+int(params[3]))], fill=(int(params[4]),int(params[5]),int(params[6]),int(params[7])), outline=(int(params[8]),int(params[9]),int(params[10]),int(params[11]))
+    )
+
+def draw_rect(img, rng, params):
+    draw = ImageDraw.Draw(img)
+    draw.rectangle(
+        [(int(params[0]), int(params[1])), (int(params[0])+int(params[2]), int(params[1])+int(params[3]))], fill=(int(params[4]),int(params[5]),int(params[6]),int(params[7])), outline=(int(params[8]),int(params[9]),int(params[10]),int(params[11]))
+    )
+
+def draw_line(img, rng, params):
+    draw = ImageDraw.Draw(img)
+    draw.line([(int(params[0]), int(params[1])), (int(params[2]), int(params[3]))], fill=(int(params[4]),int(params[5]),int(params[6]),int(params[7])),width=int(params[8]))
