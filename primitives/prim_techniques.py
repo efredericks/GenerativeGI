@@ -43,7 +43,7 @@ def count_nonblack_pil(img):
 ###
 
 
-def drawRectangle(img, x, y, width, height, fill):
+def drawRectangle(img, x, y, x2, y2, fill):
     """ 
     Draw a rectangle on the image at position (x, y) with given width, height, and fill color.
 
@@ -51,12 +51,12 @@ def drawRectangle(img, x, y, width, height, fill):
         img (PIL.Image): The image to draw on.
         x (int): The x-coordinate of the top-left corner of the rectangle.
         y (int): The y-coordinate of the top-left corner of the rectangle.
-        width (int): The width of the rectangle.
-        height (int): The height of the rectangle.
+        x2 (int): The x-coordinate of the bottom-right corner of the rectangle.
+        y2 (int): The y-coordinate of the bottom-right corner of the rectangle.
         fill (int): The fill color of the rectangle, range of 0 - 255.
     """
     draw = ImageDraw.Draw(img)
-    draw.rectangle([x, y, x + width, y + height], fill=fill)
+    draw.rectangle([x, y, x2, y2], fill=fill)
     return
 
 def drawCircle(img, centerX, centerY, radius, fill):
