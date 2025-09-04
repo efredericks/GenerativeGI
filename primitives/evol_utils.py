@@ -156,9 +156,9 @@ def evaluate_individual(g):
     for technique in g.grammar.split(','):
         _technique = technique.split(":")  # split off parameters
         if _technique[0] == 'rectangle':
-            drawRectangle(g.image, _technique[1], _technique[2], _technique[3], _technique[4], _technique[5])
+            drawRectangle(g.image, int(_technique[1]), int(_technique[2]), int(_technique[3]), int(_technique[4]), int(_technique[5]))
         elif _technique[0] == 'circle':
-            drawCircle(g.image, _technique[1], _technique[2], _technique[3], _technique[4])
+            drawCircle(g.image, int(_technique[1]), int(_technique[2]), int(_technique[3]), int(_technique[4]))
         elif _technique[0] == 'triangle':
             points = [(int(_technique[1]), int(_technique[2])), (int(_technique[3]), int(_technique[4])), (int(_technique[5]), int(_technique[6]))]
             drawTriangle(g.image, points, int(_technique[7]))

@@ -3,7 +3,7 @@ import numpy as np
 
 # tbd: palettes in other techniques!
 
-DIM = (1000, 1000)
+DIM = (64, 64)
 # DIM = (500,500)
 BACKGROUND = 'black'
 
@@ -37,7 +37,10 @@ rules = {
     # 'ordered_pattern': ['#techniques#'],
     # 'techniques': ['#technique#', '#techniques#,#technique#'],
     'technique': [
-        'rectangle:', 'circle:', 'hexagon:', 'triangle:',
+        'rectangle:#rectangle-x#:#rectangle-y#:#rectangle-x2#:#rectangle-y2#:#rectangle-fill#', 
+        'circle:#circle-centerX#:#circle-centerY#:#circle-radius#:#circle-fill#', 
+        'hexagon:#hexagon-point-x#:#hexagon-point-y#:#hexagon-point-x2#:#hexagon-point-y2#:#hexagon-point-x3#:#hexagon-point-y3#:#hexagon-point-x4#:#hexagon-point-y4#:#hexagon-point-x5#:#hexagon-point-y5#:#hexagon-point-x6#:#hexagon-point-y6#:#hexagon-fill#',
+        'triangle:#triangle-point-x#:#triangle-point-y#:#triangle-point-x2#:#triangle-point-y2#:#triangle-point-x3#:#triangle-point-y3#:#triangle-fill#',
     ],
     # rectangle parameters
         'rectangle-x': [str(x) for x in range(0, DIM[0])],

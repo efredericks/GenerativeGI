@@ -56,6 +56,12 @@ def drawRectangle(img, x, y, x2, y2, fill):
         fill (int): The fill color of the rectangle, range of 0 - 255.
     """
     draw = ImageDraw.Draw(img)
+
+    # ensure x2 > x and y2 > y
+    if x2 < x:
+        x, x2 = x2, x
+    if y2 < y:
+        y, y2 = y2, y
     draw.rectangle([x, y, x2, y2], fill=fill)
     return
 

@@ -143,6 +143,8 @@ if __name__ == '__main__':
 
     # Run the first set of evaluations.
     pop = toolbox.map(toolbox.evaluate, pop)
+    # for i in range(0, args.pop_size):
+    #     pop[i] = toolbox.evaluate(pop[i])
 
     # Calculate fitnesses once all the individuals have generated images.
     # print(type(pop))
