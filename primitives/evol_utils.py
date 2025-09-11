@@ -481,7 +481,7 @@ def score_circle_tf(_population):
     transform = transforms.Compose(
         [transforms.Resize((64,64)),
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        transforms.Normalize((0.5,), (0.5,))])
     
     for p in _population:
         # Load specific image
@@ -491,9 +491,9 @@ def score_circle_tf(_population):
 
         # handle alpha issue 
         image = p.image
-        if image.mode == 'RGBA':
-            # Drop the alpha channel
-            image = image.convert('RGB')
+        # if image.mode == 'RGBA':
+        #     # Drop the alpha channel
+        #     image = image.convert('RGB')
 
         image = transform(image)    # Apply the transformation
         image = image.unsqueeze(0)  # Add batch dimension
