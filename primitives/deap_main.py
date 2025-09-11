@@ -56,6 +56,7 @@ if __name__ == '__main__':
     parser.add_argument("--human_interaction", action="store_true", help="Activate GUI interaction for user involvement.")
     parser.add_argument("--human_interaction_gens", type=int, default=5, help="Number of generations to solicit user feedback if human_interaction flag is true")
     parser.add_argument("--clear_canvas", action="store_true", help="To clear or not clear canvas during evolutionary operations.")
+    parser.add_argument("--off_circle_objective", action="store_true", help="Turn off the circle_objective.")
     args = parser.parse_args()
 
     # Create output directories if they don't already exist.
@@ -149,6 +150,9 @@ if __name__ == '__main__':
     # Calculate fitnesses once all the individuals have generated images.
     # print(type(pop))
     fitnesses = getFitnesses(pop)
+    # If circle objective is turned off, trim the fitness lists by 1.
+    if args.off_circle_objective:
+        fitnesses = [fit[:-1] for fit in fitnesses]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
