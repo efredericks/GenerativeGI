@@ -34,7 +34,7 @@ def evaluate_ind(g):
     return evol_utils.evaluate_individual(g)
     
 def getFitnesses(_pop):
-    return [[p_c, g_c, u_c, c_c, neg_sp, art_sc] for p_c, g_c, u_c, c_c, neg_sp, art_sc in zip(evol_utils.pairwiseComparison(_pop), evol_utils.uniqueGeneCount(_pop), evol_utils.numUniqueTechniques(_pop), evol_utils.chebyshev(_pop), evol_utils.score_negative_space(_pop), evol_utils.score_art_tf(_pop))]
+    return [[p_c, g_c, u_c, c_c, neg_sp, art_sc] for p_c, g_c, u_c, c_c, neg_sp, art_sc in zip(evol_utils.pairwiseComparison(_pop), evol_utils.uniqueGeneCount(_pop), evol_utils.numUniqueTechniques(_pop), evol_utils.chebyshev(_pop), evol_utils.score_negative_space(_pop), evol_utils.score_circle_tf(_pop))]
 
 # Initial Fitnesses: 
 creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0, 1.0, -1.0, -1.0]))

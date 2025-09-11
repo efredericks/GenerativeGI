@@ -17,6 +17,7 @@ from scipy.spatial import distance as dist
 from settings import *
 
 from meanDiffModel.useMeanToClassifyTestTensorSingleImageFinal import Net
+from circle_model.useMeanToClassifyTestTensorSingleImageFinal import Net
 
 import torch
 import torchvision.transforms as transforms
@@ -420,6 +421,86 @@ def score_art_tf(_population):
         # Extract means directly by keys if you know them
         artMean = mean_features_by_label['art']
         notArtMean = mean_features_by_label['notArt']
+
+        # since we're not training, we don't need to calculate the gradients for our outputs
+        with torch.no_grad():
+            outputs, tensor_before_fc = net(image)
+            artDifference = torch.sum(torch.abs(tensor_before_fc - artMean))
+            notArtDifference = torch.sum(torch.abs(tensor_before_fc - notArtMean))
+            fitnesses.append(artDifference.item())
+
+            #print("ART MEANS", p._id, artDifference, notArtDifference, artMean, notArtMean)
+
+            #if(artDifference < notArtDifference):
+            #    #predict art
+            #    myPredicted = 0
+            #else:
+            #    #predict not art
+            #    myPredicted = 1
+
+            # For classification using the CNN, the class with the highest energy is the class chosen for prediction
+            #_, predicted = torch.max(outputs.data, 1)
+
+        #If this outputs 0 if the NN thinks its art, 1 if not art 
+        #print('0 is art, 1 is not art')
+        #print(f'Predicted = {predicted}')
+
+        #fitnesses.append(myPredicted)
+
+        #if(artDifference < notArtDifference):
+        #     print('Closer to the art mean')
+        #else:
+        #     print('Closer to the not art mean')
+
+        #tensor_file_path = f"./tensorGenerated.pt"  # replace with your desired file path
+        #torch.save(tensor_before_fc, tensor_file_path)
+        #print(f"Tensor saved to {tensor_file_path}")
+        #print("---")
+
+    return fitnesses
+
+def score_circle_tf(_population):
+    #Load the saved means
+    tensor_folder = './circle_model/'
+    load_path = os.path.join(tensor_folder, 'mean_features_by_label.pt')
+
+    fitnesses = []
+
+    # Load the dictionary containing the mean features
+    mean_features_by_label = torch.load(load_path)
+    #print(f"Mean features by label have been loaded from {load_path}")
+
+    net = Net()
+
+    # modelLocation = './meanDiffModel/paintingVsSculpture.pth'
+    # modelLocation = './meanDiffModelV2/artVsRandomNoise.pth'
+    modelLocation = './circle_model/upperLeftCircleVsNoCircle.pth'
+
+    net.load_state_dict(torch.load(modelLocation, map_location=torch.device('cpu')))
+
+    transform = transforms.Compose(
+        [transforms.Resize((64,64)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    
+    for p in _population:
+        # Load specific image
+        #image_path = "./img/img-{0}.jpg".format(i)
+        #image_path = "img/img-86.png" #"./notArtImage.jpg"
+        #image = Image.open(image_path)
+
+        # handle alpha issue 
+        image = p.image
+        if image.mode == 'RGBA':
+            # Drop the alpha channel
+            image = image.convert('RGB')
+
+        image = transform(image)    # Apply the transformation
+        image = image.unsqueeze(0)  # Add batch dimension
+
+        # Extract means directly by keys if you know them
+        artMean = mean_features_by_label['upperLeftCircle']
+        notArtMean = mean_features_by_label['noCircle']
 
         # since we're not training, we don't need to calculate the gradients for our outputs
         with torch.no_grad():
