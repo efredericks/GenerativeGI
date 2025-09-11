@@ -491,6 +491,9 @@ def score_circle_tf(_population):
 
         # handle alpha issue 
         image = p.image
+
+        # Conver the image to grayscale
+        image = image.convert('L')
         # if image.mode == 'RGBA':
         #     # Drop the alpha channel
         #     image = image.convert('RGB')
