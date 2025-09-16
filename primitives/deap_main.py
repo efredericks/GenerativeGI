@@ -36,8 +36,7 @@ def evaluate_ind(g):
 def getFitnesses(_pop):
     return [[p_c, g_c, u_c, c_c, neg_sp, art_sc] for p_c, g_c, u_c, c_c, neg_sp, art_sc in zip(evol_utils.pairwiseComparison(_pop), evol_utils.uniqueGeneCount(_pop), evol_utils.numUniqueTechniques(_pop), evol_utils.chebyshev(_pop), evol_utils.score_negative_space(_pop), evol_utils.score_circle_tf(_pop))]
 
-# Initial Fitnesses: 
-creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0, 1.0, -1.0, -1.0]))
+creator.create("Fitness", base.Fitness, weights=([1.0,-1.0, 1.0, 1.0, -1.0, 1.0]))
 creator.create("Individual", GenerativeObject, fitness=creator.Fitness)
 
 if __name__ == '__main__': 
@@ -115,7 +114,7 @@ if __name__ == '__main__':
         toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=False, num_objectives=1)
     else:
         # Register the selection function.
-        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.85)
+        toolbox.register("select", evol_utils.epsilon_lexicase_selection, tournsize=args.tourn_size, shuffle=args.shuffle, num_objectives=4, epsilon=0.85, excl_indicies=[5] if args.off_circle_objective else [])
 
     # Crossover and mutation probability
     cxpb, mutpb = 0.5, 0.4
@@ -150,9 +149,6 @@ if __name__ == '__main__':
     # Calculate fitnesses once all the individuals have generated images.
     # print(type(pop))
     fitnesses = getFitnesses(pop)
-    # If circle objective is turned off, trim the fitness lists by 1.
-    if args.off_circle_objective:
-        fitnesses = [fit[:-1] for fit in fitnesses]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
