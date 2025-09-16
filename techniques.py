@@ -2,13 +2,15 @@ from PIL import Image, ImageDraw, ImageChops, ImageColor
 import opensimplex
 from perlin_noise import PerlinNoise
 from pixelsort import pixelsort
-# import random
+import random
 import math
 import numpy as np
 from settings import *
 import scipy.spatial
 import cv2
 from sklearn.cluster import KMeans
+
+from typing import *
 
 
 ### Utility functions
@@ -961,6 +963,6 @@ def draw_rect(img, rng, params):
         [(int(params[0]), int(params[1])), (int(params[0])+int(params[2]), int(params[1])+int(params[3]))], fill=(int(params[4]),int(params[5]),int(params[6]),int(params[7])), outline=(int(params[8]),int(params[9]),int(params[10]),int(params[11]))
     )
 
-def draw_line(img, rng, params):
+def draw_line(img : Image, rng : random.Random, params : str) -> None:
     draw = ImageDraw.Draw(img)
     draw.line([(int(params[0]), int(params[1])), (int(params[2]), int(params[3]))], fill=(int(params[4]),int(params[5]),int(params[6]),int(params[7])),width=int(params[8]))
