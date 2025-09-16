@@ -157,16 +157,16 @@ def evaluate_individual(g):
     for technique in g.grammar.split(','):
         _technique = technique.split(":")  # split off parameters
         if _technique[0] == 'rectangle':
-            drawRectangle(g.image, int(_technique[1]), int(_technique[2]), int(_technique[3]), int(_technique[4]), int(_technique[5]))
+            drawRectangle(g.image, int(_technique[1]), int(_technique[2]), int(_technique[3]), int(_technique[4]), (int(_technique[5]),int(_technique[6]),int(_technique[7]),int(_technique[8])))
         elif _technique[0] == 'circle':
-            drawCircle(g.image, int(_technique[1]), int(_technique[2]), int(_technique[3]), int(_technique[4]))
+            drawCircle(g.image, int(_technique[1]), int(_technique[2]), int(_technique[3]), (int(_technique[4]),int(_technique[5]),int(_technique[6]),int(_technique[7])))
         elif _technique[0] == 'triangle':
             points = [(int(_technique[1]), int(_technique[2])), (int(_technique[3]), int(_technique[4])), (int(_technique[5]), int(_technique[6]))]
-            drawTriangle(g.image, points, int(_technique[7]))
+            drawTriangle(g.image, points, (int(_technique[7]),int(_technique[8]),int(_technique[9]),int(_technique[10])))
         elif _technique[0] == 'hexagon':
             points = [(int(_technique[1]), int(_technique[2])), (int(_technique[3]), int(_technique[4])), (int(_technique[5]), int(_technique[6])),
                       (int(_technique[7]), int(_technique[8])), (int(_technique[9]), int(_technique[10])), (int(_technique[11]), int(_technique[12]))]
-            drawHexagon(g.image, points, int(_technique[13]))
+            drawHexagon(g.image, points, (int(_technique[13]),int(_technique[14]),int(_technique[15]),int(_technique[16])))
 
     return g
 
@@ -491,8 +491,11 @@ def score_circle_tf(_population):
 
         # handle alpha issue 
         image = p.image
+        
+        # Make a copy of the PIL image
+        image = p.image.copy()
 
-        # Conver the image to grayscale
+        # Convert the image to grayscale
         image = image.convert('L')
         # if image.mode == 'RGBA':
         #     # Drop the alpha channel

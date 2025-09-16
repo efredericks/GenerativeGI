@@ -62,7 +62,7 @@ def drawRectangle(img, x, y, x2, y2, fill):
         x, x2 = x2, x
     if y2 < y:
         y, y2 = y2, y
-    draw.rectangle([x, y, x2, y2], fill=fill)
+    draw.rectangle([x, y, x2, y2], fill=(fill))
     return
 
 def drawCircle(img, centerX, centerY, radius, fill):
@@ -77,7 +77,8 @@ def drawCircle(img, centerX, centerY, radius, fill):
         fill (int): The fill color of the circle, range of 0 - 255.
     """
     draw = ImageDraw.Draw(img)
-    draw.ellipse([centerX - radius, centerY - radius, centerX + radius, centerY + radius], fill=fill)
+    print(f"\t\t\t\t\t\t\t{fill}")
+    draw.ellipse([centerX - radius, centerY - radius, centerX + radius, centerY + radius], fill=(fill))
     return
 
 def drawHexagon(img, points, fill):
@@ -90,7 +91,7 @@ def drawHexagon(img, points, fill):
         fill (int): The fill color of the hexagon, range of 0 - 255.
     """
     draw = ImageDraw.Draw(img)
-    draw.polygon(points, fill=fill)
+    draw.polygon(points, fill=(fill))
     return
 
 def drawTriangle(img, points, fill):
@@ -103,5 +104,5 @@ def drawTriangle(img, points, fill):
         fill (int): The fill color of the triangle, range of 0 - 255.
     """
     draw = ImageDraw.Draw(img)
-    draw.polygon(points, fill=fill)
+    draw.polygon(points, fill=(fill))
     return

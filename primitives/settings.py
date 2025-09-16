@@ -47,12 +47,12 @@ rules = {
         'rectangle-y': [str(x) for x in range(0, DIM[1])],
         'rectangle-x2': [str(x) for x in range(0, DIM[0])],
         'rectangle-y2': [str(x) for x in range(0, DIM[1])],
-        'rectangle-fill': [str(x) for x in range(0, 256)],
+        'rectangle-fill': '#color#',
     # circle parameters
         'circle-centerX': [str(x) for x in range(0, DIM[0])],
         'circle-centerY': [str(x) for x in range(0, DIM[1])],
         'circle-radius': [str(x) for x in range(1, DIM[0]//4)],
-        'circle-fill': [str(x) for x in range(0, 256)],
+        'circle-fill': '#color#',
     # hexagon parameters
         'hexagon-point-x': [str(x) for x in range(0, DIM[0])],
         'hexagon-point-y': [str(x) for x in range(0, DIM[1])],
@@ -66,7 +66,7 @@ rules = {
         'hexagon-point-y5': [str(x) for x in range(0, DIM[1])],
         'hexagon-point-x6': [str(x) for x in range(0, DIM[0])],
         'hexagon-point-y6': [str(x) for x in range(0, DIM[1])],
-        'hexagon-fill': [str(x) for x in range(0, 256)],
+        'hexagon-fill': '#color#',
     # triangle parameters
         'triangle-point-x': [str(x) for x in range(0, DIM[0])],
         'triangle-point-y': [str(x) for x in range(0, DIM[1])],
@@ -74,7 +74,7 @@ rules = {
         'triangle-point-y2': [str(x) for x in range(0, DIM[1])],
         'triangle-point-x3': [str(x) for x in range(0, DIM[0])],
         'triangle-point-y3': [str(x) for x in range(0, DIM[1])],
-        'triangle-fill': [str(x) for x in range(0, 256)],
+        'triangle-fill': '#color#',
 }
 grammar = tracery.Grammar(rules)
 # print(grammar.flatten("#ordered_pattern#"))
