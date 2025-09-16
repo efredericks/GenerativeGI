@@ -1,7 +1,6 @@
 import random
 import os, tempfile
 from typing import *
-from typeguard import check_type
 import inspect
 
 import techniques 
@@ -101,8 +100,13 @@ class TechniqueFuzzer:
         return random.choice(val)
 
     def fuzz_parameters(self, signature: Dict) -> List[Any]:
-        # for parameter_name, parameter in signature.parameters.items():
-        #     if parameter.annotation != inspect._empty:
+        for parameter_name, parameter in signature.parameters.items():
+            if parameter.annotation != inspect._empty:
+                match parameter.annotation:
+                    case isinstance(str):
+                        pass
+                    case _:
+                        pass
         #         print(f"Param {parameter_name}, Type {parameter.annotation}")
         return []
 
