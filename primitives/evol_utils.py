@@ -796,8 +796,8 @@ def epsilon_lexicase_selection(population,
     ]
 
     # Remove excluded indicies
-    if not shuffle:
-        fit_indicies = [i for i in fit_indicies if i not in excl_indicies]
+    # if not shuffle:
+    fit_indicies = [i for i in fit_indicies if i not in excl_indicies]
 
     # Shuffle fit indicies if passed to do so.
     if shuffle:
